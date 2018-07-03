@@ -21,6 +21,6 @@ There are 2 examples. To run them, first `cd src`, then:
 
 ## Docs
 
-This repo is copied almost as-is from Dfinity's [js-blb-lib](https://github.com/dfinity/js-bls-lib) and [dkg](https://github.com/dfinity/dkg).
+This repo is copied almost as-is from Dfinity's [js-bls-lib](https://github.com/dfinity/js-bls-lib) and [dkg](https://github.com/dfinity/dkg).
 
 
