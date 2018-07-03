@@ -122,9 +122,12 @@ bls.onModuleInit(() => {
     const groupsSig = bls.signature() // allocate buf to hold signature 
     bls.signatureRecover(groupsSig, sigs, signersIds) // combine the individual signatures into a group signature
 
-    const sigArray = bls.signatureExport(groupsSig)
-    const groupSigBuf = Buffer.from(sigArray)
-    console.log('->    Group signature: ', groupSigBuf.toString('hex'))
+    const groupSigBuf = Buffer.from(bls.signatureExport(groupsSig))
+    sigs.forEach(sig => {
+        const exportedSig = Buffer.from(bls.signatureExport(sig))
+        console.log(`Individual signature: len=${exportedSig.length} ${exportedSig.toString('hex')}`)
+    })
+    console.log(`->   Group signature: len=${groupSigBuf.length} ${groupSigBuf.toString('hex')}`)
 
     // Verify the group signature on the message with the group public key
     var verified = bls.verify(groupsSig, groupsPublicKey, message)
@@ -132,7 +135,7 @@ bls.onModuleInit(() => {
     bls.free(groupsSig)
 
     console.log('-> testing individual public key derivation')
-    // we can also use the groups verification vector to derive any of the members
+    // we can also use the group verification vector to derive any of the members
     // public key
     const member = members[4]
     const pk1 = bls.publicKey()
@@ -211,11 +214,13 @@ bls.onModuleInit(() => {
     // the resulting signature will also be the same no matter which members signed
     const groupsNewSig = bls.signature()
     bls.signatureRecover(groupsNewSig, sigs, signersIds)
-
-    const newSigArray = bls.signatureExport(groupsNewSig)
-    const newSigBuf = Buffer.from(newSigArray)
-    console.log('->    sigtest result : ', newSigBuf.toString('hex'))
-    console.log('->    signature comparison :', ((newSigBuf.equals(groupSigBuf)) ? 'success' : 'failure'))
+    const newGroupSigBuf = Buffer.from(bls.signatureExport(groupsNewSig))
+    sigs.forEach(sig => {
+        const exportedSig = Buffer.from(bls.signatureExport(sig))
+        console.log(`Individual signature: len=${exportedSig.length} ${exportedSig.toString('hex')}`)
+    })
+    console.log(`->   Group signature: len=${newGroupSigBuf.length} ${newGroupSigBuf.toString('hex')}`)
+    console.log('->    signature comparison :', ((newGroupSigBuf.equals(groupSigBuf)) ? 'success' : 'failure'))
 
     verified = bls.verify(groupsNewSig, groupsPublicKey, message)
     console.log('->    verified ?', Boolean(verified))
