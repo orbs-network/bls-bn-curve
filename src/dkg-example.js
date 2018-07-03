@@ -15,75 +15,89 @@ bls.onModuleInit(() => {
     //
     // Overview
     // 1) Each member will "setup" and generate a verification vector and secret
-    // key contrubution share for every other member
-    // 2) Each member post their verifcation vector publicly
-    // 3) Each member sends their key contrubution share each other member
-    // 4) When a member recieves a contrubution share it validates it against
-    // the senders verifcation vector and saves it
-    // 5) After members receive all thier contribution shares they compute
+    // key contribution share for every other member
+    // 2) Each member post their verification vector publicly
+    // 3) Each member sends their key contribution share to each other member
+    // 4) When a member receives a contribution share it validates it against
+    // the sender's verification vector and saves it
+    // 5) After members receive all their contribution shares they compute
     // their secret key for the group
 
     bls.init()
 
     // to setup a group first we need a set a threshold. The threshold is the
-    // number of group participants need to create a valid siganture for the group
+    // number of group participants needed to create a valid signature for the group
     const threshold = 4
-    // each member in the group needs a unique ID. What the id is doesn't matter
+
+    // each member in the group needs a unique ID. The value of the ID doesn't matter
     // but it does need to be imported into bls-lib as a secret key
     const members = [10314, 30911, 25411, 8608, 31524, 15441, 23399].map(id => {
+
+        // allocate buffer to hold secret key
         const sk = bls.secretKey()
+
+        // generate the secret key given a seed phrase (the ID)
         bls.hashToSecretKey(sk, Buffer.from([id]))
+
         return {
             id: sk,
-            recievedShares: []
+            receivedShares: []
         }
     })
 
     console.log(`Created ${members.length} members`)
     console.log('Beginning the secret instantiation round...')
 
-    // this stores an array of verification vectors. One for each Member
+    // Array of verification vectors - one verification vector for each Member
+    // Each verification vector is itself an array so vvecs is an array of arrays
     const vvecs = []
 
-    // each member need to first create a verification vector and a secret key
-    // contribution for every other member in the group (including itself!)
+    // Each member creates a verification vector & secret key contribution 
+    // for every member in the group (including itself!)
+
     members.forEach(id => {
+
+        // Generate the secret key contributions array, based on the all members' IDs and the threshold
+
         const {
-            verificationVector,
-            secretKeyContribution
+            verificationVector, // array of public keys
+            secretKeyContribution // array of secret key contributions
         } = dkg.generateContribution(bls, members.map(m => m.id), threshold)
+
         // the verification vector should be posted publically so that everyone
         // in the group can see it
         vvecs.push(verificationVector)
 
-        // Each secret sk contribution is then encrypted and sent to the member it is for.
+        // Each secret key (sk) contribution is then encrypted and sent to the member it is for.
         secretKeyContribution.forEach((sk, i) => {
             // when a group member receives its share, it verifies it against the
             // verification vector of the sender and then saves it
             const member = members[i]
+
+
             const verified = dkg.verifyContributionShare(bls, member.id, sk, verificationVector)
             if (!verified) {
                 throw new Error('invalid share!')
             }
-            member.recievedShares.push(sk)
+            member.receivedShares.push(sk)
         })
     })
 
-    // now each members adds together all received secret key contributions shares to get a
+    // Each member adds its secret key contribution shares to get a
     // single secretkey share for the group used for signing message for the group
     members.forEach((member, i) => {
-        const sk = dkg.addContributionShares(bls, member.recievedShares)
+        const sk = dkg.addContributionShares(bls, member.receivedShares)
         member.secretKeyShare = sk
     })
     console.log('-> secret shares have been generated')
 
-    // Now any one can add together the all verification vectors posted by the
-    // members of the group to get a single verification vector of for the group
+    // Now any one can add together all verification vectors posted by the
+    // members of the group to get a single verification vector for the group
+    // This converts vvecs (an array of arrays) into a single array by reducing each member of vvecs into a single value
     const groupsVvec = dkg.addVerificationVectors(bls, vvecs)
     console.log('-> verification vector computed')
 
-    // the groups verifcation vector contains the groups public key. The group's
-    // public key is the first element in the array
+    // the group's verification vector contains the group's public key as its first element
     const groupsPublicKey = groupsVvec[0]
 
     const pubArray = bls.publicKeyExport(groupsPublicKey)
@@ -94,24 +108,27 @@ bls.onModuleInit(() => {
     const message = 'hello world'
     const sigs = []
     const signersIds = []
+
+    // Each member signs the message with its secret key share. 
     for (let i = 0; i < threshold; i++) {
-        const sig = bls.signature()
+        const sig = bls.signature() // allocate buf to hold signature
         bls.sign(sig, members[i].secretKeyShare, message)
         sigs.push(sig)
         signersIds.push(members[i].id)
     }
 
-    // then anyone can combine the signatures to get the groups signature
+    // Anyone can combine the signatures to get the group signature
     // the resulting signature will also be the same no matter which members signed
-    const groupsSig = bls.signature()
-    bls.signatureRecover(groupsSig, sigs, signersIds)
+    const groupsSig = bls.signature() // allocate buf to hold signature 
+    bls.signatureRecover(groupsSig, sigs, signersIds) // combine the individual signatures into a group signature
 
     const sigArray = bls.signatureExport(groupsSig)
-    const sigBuf = Buffer.from(sigArray)
-    console.log('->    sigtest result : ', sigBuf.toString('hex'))
+    const groupSigBuf = Buffer.from(sigArray)
+    console.log('->    Group signature: ', groupSigBuf.toString('hex'))
 
+    // Verify the group signature on the message with the group public key
     var verified = bls.verify(groupsSig, groupsPublicKey, message)
-    console.log('->    verified ?', Boolean(verified))
+    console.log('->    verified group signature with group public key?', Boolean(verified))
     bls.free(groupsSig)
 
     console.log('-> testing individual public key derivation')
@@ -131,8 +148,8 @@ bls.onModuleInit(() => {
 
     console.log('-> member shares array reinitialized')
     members.forEach(member => {
-        member.recievedShares.length = 0
-        member.recievedShares.push(member.secretKeyShare)
+        member.receivedShares.length = 0
+        member.receivedShares.push(member.secretKeyShare)
     })
 
     console.log('-> running null-secret contribution generator')
@@ -155,14 +172,14 @@ bls.onModuleInit(() => {
             if (!verified) {
                 throw new Error('invalid share!')
             }
-            member.recievedShares.push(sk)
+            member.receivedShares.push(sk)
         })
     })
 
     // now each members adds together all received secret key contributions shares to get a
     // single secretkey share for the group used for signing message for the group
     members.forEach((member, i) => {
-        const sk = dkg.addContributionShares(bls, member.recievedShares)
+        const sk = dkg.addContributionShares(bls, member.receivedShares)
         member.secretKeyShare = sk
     })
     console.log('-> new secret shares have been generated')
@@ -198,7 +215,7 @@ bls.onModuleInit(() => {
     const newSigArray = bls.signatureExport(groupsNewSig)
     const newSigBuf = Buffer.from(newSigArray)
     console.log('->    sigtest result : ', newSigBuf.toString('hex'))
-    console.log('->    signature comparison :', ((newSigBuf.equals(sigBuf)) ? 'success' : 'failure'))
+    console.log('->    signature comparison :', ((newSigBuf.equals(groupSigBuf)) ? 'success' : 'failure'))
 
     verified = bls.verify(groupsNewSig, groupsPublicKey, message)
     console.log('->    verified ?', Boolean(verified))

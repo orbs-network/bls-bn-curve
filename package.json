@@ -12,6 +12,7 @@
         "bls-lib": "0.3.4",
         "dkg": "0.0.1",
         "nop": "1.0.0",
-        "safe-buffer": "5.1.2"
+        "safe-buffer": "5.1.2",
+        "tweetnacl": "^1.0.0"
     }
 }
