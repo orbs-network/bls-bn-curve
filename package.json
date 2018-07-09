@@ -11,8 +11,13 @@
     "dependencies": {
         "bls-lib": "0.3.4",
         "dkg": "0.0.1",
+        "gonode": "^0.1.2",
         "nop": "1.0.0",
         "safe-buffer": "5.1.2",
-        "tweetnacl": "^1.0.0"
+        "tweetnacl": "^1.0.0",
+        "web3": "^0.20.6"
+    },
+    "devDependencies": {
+        "mocha": "^5.2.0"
     }
 }
