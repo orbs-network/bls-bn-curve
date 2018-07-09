@@ -1,5 +1,145 @@
 [
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "committerIndex",
+				"type": "uint16"
+			},
+			{
+				"indexed": false,
+				"name": "pubCommit",
+				"type": "uint256[]"
+			},
+			{
+				"indexed": false,
+				"name": "prvCommit",
+				"type": "uint256[]"
+			}
+		],
+		"name": "NewCommit",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "phase",
+				"type": "uint8"
+			}
+		],
+		"name": "PhaseChange",
+		"type": "event"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "senderIndex",
+				"type": "uint16"
+			},
+			{
+				"name": "pubCommit",
+				"type": "uint256[]"
+			},
+			{
+				"name": "prCommit",
+				"type": "uint256[]"
+			}
+		],
+		"name": "commit",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "complainerIndex",
+				"type": "uint16"
+			},
+			{
+				"name": "accusedIndex",
+				"type": "uint16"
+			}
+		],
+		"name": "complaintPrivateCommit",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [],
+		"name": "getGroupPK",
+		"outputs": [
+			{
+				"name": "groupPK",
+				"type": "uint256[2]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [],
+		"name": "join",
+		"outputs": [
+			{
+				"name": "index",
+				"type": "uint16"
+			}
+		],
+		"payable": true,
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [],
+		"name": "phaseChange",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"name": "threshold",
+				"type": "uint16"
+			},
+			{
+				"name": "numParticipants",
+				"type": "uint16"
+			},
+			{
+				"name": "deposit",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
 		"constant": true,
 		"inputs": [],
 		"name": "a",
@@ -7,6 +147,48 @@
 			{
 				"name": "",
 				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "b",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "commitTimeout",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "curN",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint16"
 			}
 		],
 		"payable": false,
@@ -29,6 +211,94 @@
 	},
 	{
 		"constant": true,
+		"inputs": [
+			{
+				"name": "p0",
+				"type": "uint256[2]"
+			},
+			{
+				"name": "p1",
+				"type": "uint256[2]"
+			}
+		],
+		"name": "ecadd",
+		"outputs": [
+			{
+				"name": "p2",
+				"type": "uint256[2]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "p0",
+				"type": "uint256[2]"
+			},
+			{
+				"name": "scalar",
+				"type": "uint256"
+			}
+		],
+		"name": "ecmul",
+		"outputs": [
+			{
+				"name": "p1",
+				"type": "uint256[2]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "g",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "p1",
+				"type": "uint256[2]"
+			},
+			{
+				"name": "p2",
+				"type": "uint256[2]"
+			}
+		],
+		"name": "isEqualPoints",
+		"outputs": [
+			{
+				"name": "isEqual",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"constant": true,
 		"inputs": [],
 		"name": "n",
 		"outputs": [
@@ -42,23 +312,9 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "index",
-				"type": "uint16"
-			}
-		],
-		"name": "getPK",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"constant": true,
 		"inputs": [],
-		"name": "b",
+		"name": "p",
 		"outputs": [
 			{
 				"name": "",
@@ -94,21 +350,12 @@
 	},
 	{
 		"constant": true,
-		"inputs": [
-			{
-				"name": "p0",
-				"type": "uint256[2]"
-			},
-			{
-				"name": "scalar",
-				"type": "uint256"
-			}
-		],
-		"name": "ecmul",
+		"inputs": [],
+		"name": "phaseStart",
 		"outputs": [
 			{
-				"name": "p1",
-				"type": "uint256[2]"
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"payable": false,
@@ -118,11 +365,11 @@
 	{
 		"constant": true,
 		"inputs": [],
-		"name": "curN",
+		"name": "q",
 		"outputs": [
 			{
 				"name": "",
-				"type": "uint16"
+				"type": "uint256"
 			}
 		],
 		"payable": false,
@@ -142,229 +389,5 @@
 		"payable": false,
 		"stateMutability": "view",
 		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "p",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "senderIndex",
-				"type": "uint16"
-			},
-			{
-				"name": "pubCommit",
-				"type": "uint256[]"
-			},
-			{
-				"name": "prCommit",
-				"type": "uint256[]"
-			}
-		],
-		"name": "commit",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "p1",
-				"type": "uint256[2]"
-			},
-			{
-				"name": "p2",
-				"type": "uint256[2]"
-			}
-		],
-		"name": "isEqualPoints",
-		"outputs": [
-			{
-				"name": "isEqual",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "complainerIndex",
-				"type": "uint16"
-			},
-			{
-				"name": "accusedIndex",
-				"type": "uint16"
-			}
-		],
-		"name": "complaintPrivateCommit",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [],
-		"name": "join",
-		"outputs": [
-			{
-				"name": "index",
-				"type": "uint16"
-			}
-		],
-		"payable": true,
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "g",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "p0",
-				"type": "uint256[2]"
-			},
-			{
-				"name": "p1",
-				"type": "uint256[2]"
-			}
-		],
-		"name": "ecadd",
-		"outputs": [
-			{
-				"name": "p2",
-				"type": "uint256[2]"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [],
-		"name": "getGroupPK",
-		"outputs": [
-			{
-				"name": "groupPK",
-				"type": "uint256[2]"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "q",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"name": "threshold",
-				"type": "uint16"
-			},
-			{
-				"name": "numParticipants",
-				"type": "uint16"
-			},
-			{
-				"name": "deposit",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "phase",
-				"type": "uint8"
-			}
-		],
-		"name": "PhaseChange",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "committerIndex",
-				"type": "uint16"
-			},
-			{
-				"indexed": false,
-				"name": "pubCommit",
-				"type": "uint256[]"
-			},
-			{
-				"indexed": false,
-				"name": "prvCommit",
-				"type": "uint256[]"
-			}
-		],
-		"name": "NewCommit",
-		"type": "event"
 	}
 ]

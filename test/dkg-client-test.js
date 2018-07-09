@@ -38,176 +38,208 @@ fs = require('fs');
 
 const assert = require('assert');
 const Web3 = require('web3');
+const solc = require('solc')
+
 const web3 = new Web3(new Web3.providers.HttpProvider(ETH_URL));
 const mocha = require('mocha').mocha;
 const CLIENT_COUNT = 5;
 const THRESHOLD = 2;
-
-const contractAbi = fs.readFileSync('./test/dkg.abi');
-
-
-// myContract.options = {
-//     address: CONTRACT_ADDRESS,
-//     // jsonInterface: [...],
-//     from: '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe',
-//     gasPrice: '10000000000000',
-//     gas: 1000000
-// }
-
-
-
-// beforeEach(async () => {
-//Get a list of all accounts
-// accounts = await web3.eth.getAccounts();
-// await web3.eth.sendTransaction({
-//     from: web3.eth.accounts[0],
-//     to: web3.eth.accounts[1],
-//     value: web3.web3.toWei(50, 'ether')
+// let myContract;
+var input = {
+    'dkg.sol': fs.readFileSync('./test/dkg.sol', 'utf8')
+};
+let compiledContract = solc.compile({
+    sources: input
+}, 1);
+let abi = compiledContract.contracts['dkg.sol:dkg'].interface;
+let bytecode = '0x' + compiledContract.contracts['dkg.sol:dkg'].bytecode;
+// let gasEstimate = web3.eth.estimateGas({
+//     data: bytecode
 // });
-// });
+let DKG = web3.eth.contract(JSON.parse(abi));
 
-describe('Inbox', () => {
-    it('deploys a contract', async () => {
-        // console.log(accounts);
-
-        const Contract = web3.eth.contract(JSON.parse(contractAbi));
-
-        // var myContractInstance = MyContract.new(param1, param2, {data: myContractCode, gas: 300000, from: mySenderAddress});
-        // myContractInstance.transactionHash // The hash of the transaction, which created the contract
-        // myContractInstance.address
-
-
-        console.log('Get contract at address', CONTRACT_ADDRESS);
-        const myContract = Contract.at(CONTRACT_ADDRESS);
-        //console.log(myContract);
-        // var tx = new ethereumjs.Tx({
-        //     nonce: 0,
-        //     gasPrice: web3.toHex(web3.toWei('20', 'gwei')),
-        //     gasLimit: 100000,
-        //     to: CONTRACT_ADDRESS,
-        //     value: DEPOSIT_WEI
-        //     // data: data,
-        // });
-        // tx.sign(ethereumjs.Buffer.Buffer.from(privateKey, 'hex'));
-
-
-        // myContract.deploy()
-        // var raw = '0x' + tx.serialize().toString('hex');
-        // web3.eth.sendRawTransaction(raw, function (err, transactionHash) {
-        // console.log(transactionHash);
-        // });
-
-
-        // console.log('Call join(). Gas price: ', web3.eth.gas);
-        // myContract.join.estimateGas({
-        //     from: CLIENTS[0].address,
-        //     value: DEPOSIT_WEI,
-        //     gas: 2000000
-        // }, (err, result) => {
-        //     console.log('err', err);
-        //     console.log('Estimated gas price: ', result);
-        // });
-
-        console.log(` =====> join <=====`);
-
-        return joinAllClients()
-            .then(() => {
-                console.log(` =====> commit <=====`);
-                return commitAllClients();
-            })
-            .then(() => {
-                signAndVerify();
-                assert(true);
-            })
-            .catch(err => {
-                console.log(`Error: ${err.message} ${JSON.stringify(err)}`);
-                assert(false);
-            });
-    });
-
-    // await timeout(1000);
-
-    console.log(`Clients: ${JSON.stringify(CLIENTS)}`);
-
-
-
-
-
-    // function commit(uint16 senderIndex, uint256[] pubCommit, uint256[] prCommit)
-
-    // myContract.methods.join().send({
-    //         from: CLIENTS[0].address,
-
-    //     })
-    //     .on('transactionHash', function (hash) {
-    //         console.log('hash', hash);
-    //     })
-    //     .on('receipt', function (receipt) {
-    //         console.log('receipt', receipt);
-    //     })
-    //     .on('confirmation', function (confirmationNumber, receipt) {
-    //         console.log('conf', confirmationNumber, 'receipt', receipt);
-    //     })
-    //     .on('error', console.error);
+var myContract = DKG.new(THRESHOLD, CLIENT_COUNT, DEPOSIT_WEI, {
+    data: bytecode,
+    gas: 3000000,
+    from: CLIENTS[0].address
 });
 
-/// Commit
+// var dkg = DKG.new(THRESHOLD, CLIENT_COUNT, DEPOSIT_WEI, {
+//     from: CLIENTS[0].address,
+//     data: bytecode,
+//     gas: 2000000
+// }, function (err, myContract) {
+//     if (!err) {
+//         if (!myContract.address) {
+//             console.log(myContract.transactionHash)
+//         } else {
+//             console.log(myContract.address)
+//         }
+//     }
+// });
 
-function commitAllClients() {
-    const promises = [];
-    CLIENTS.forEach((client, i) => {
-        console.log(`Calling commit() with client #${i} ${client.address}`);
-        promises.push(commit(client));
-    });
-    return Promise.all(promises);
-}
+// const contractSol = fs.readFileSync('./test/dkg.sol'); // Not used now
+// const contractAbi = fs.readFileSync('./test/dkg.abi');
+// const Contract = web3.eth.contract(contractAbi);
+// const myContract = Contract.at(CONTRACT_ADDRESS);
+// let myContract;
+// var compiled = web3.eth.compile.solidity(contractSol);
+// var code = compiled.code;
+// // contract json abi, this is autogenerated using solc CLI
+// var abi = compiled.info.abiDefinition;
+// web3.eth.contract(abi).new({
+//     data: code
+// }, function (err, contract) {
+//     if (err) {
+//         console.error(err);
+//         return;
+//         // callback fires twice, we only want the second call when the contract is deployed
+//     } else if (contract.address) {
+//         myContract = contract;
+//     }
+// });
 
-function commit(client) {
-    return new Promise((resolve, reject) => {
-        myContract.commit(client.id, pubCommit, prCommit, {
-            from: client.address,
-            value: DEPOSIT_WEI,
-            gasLimit: 3000000
-        }, (err, result) => {
-            console.log('err', err);
-            if (err !== null) {
-                console.log(`Failed to commit() with client #${i} ${client.address}`);
-                reject(err);
-            }
-            console.log(`Client #${i} ${client.address} committed successfully. Result: ${result}`);
-            client.id = result;
-            resolve(result);
-        });
+
+describe('DKG Contract Tests', async () => {
+
+    // before(() => {
+    //     const Contract = web3.eth.contract(contractAbi);
+    //     myContract = Contract.at(CONTRACT_ADDRESS);
+    // });
+    it('runs join()', async () => {
+        try {
+            await joinAllClients();
+            assert(true);
+        } catch (e) {
+            console.log(`Join() Error: ${e.msg} ${JSON.stringify(e)}`);
+            assert(false);
+        }
     });
-}
+    it('runs commit()', async () => {
+        try {
+            await commitAllClients();
+            assert(true);
+        } catch (e) {
+            console.log(`Commit() Error: ${e.msg} ${JSON.stringify(e)}`);
+            assert(false);
+        }
+    });
+    it('runs signAndVerify()', async () => {
+        try {
+            await signAndVerify();
+            assert(true);
+        } catch (e) {
+            console.log(`SignAndVerify() Error: ${e.msg} ${JSON.stringify(e)}`);
+            assert(false);
+        }
+    });
+});
 
 /// Join
 
 function joinAllClients() {
+    console.log(` =====> join <=====`);
     const promises = [];
     CLIENTS.forEach((client, i) => {
         console.log(`Calling join() with client #${i} ${client.address}`);
-        promises.push(join(client));
+        promises.push(join(client, i));
+    });
+    promises.push(() => {
+        setTimeout(1000);
     });
     return Promise.all(promises);
 }
 
 
-function join(client) {
+function join(client, i) {
     return new Promise((resolve, reject) => {
+        if (!myContract.join) {
+            reject('No join() method on contract!');
+        }
         myContract.join({
             from: client.address,
             value: DEPOSIT_WEI,
             gasLimit: 3000000
         }, (err, result) => {
-            console.log('err', err);
             if (err !== null) {
-                console.log(`Failed to join() with client #${i} ${client.address}`);
-                reject(err);
+                console.log(`Failed to join() with client #${i} ${client.address}. msg=${err.msg} Err=${JSON.stringify(err)}`);
+                return reject(err);
             }
             console.log(`Client #${i} ${client.address} joined successfully. Result: ${result}`);
             client.id = result;
             resolve(result);
         });
     });
+}
+
+
+/// Commit
+
+function commitAllClients() {
+    console.log(` =====> commit <=====`);
+    const promises = [];
+    CLIENTS.forEach((client, i) => {
+        console.log(`Calling commit() with client #${i} ${client.address}`);
+        promises.push(commit(client, i));
+    });
+    promises.push(() => {
+        setTimeout(1000);
+    });
+    return Promise.all(promises);
+}
+
+function commit(client, i) {
+    return new Promise((resolve, reject) => {
+        const pubCommit = getPubCommit();
+        const prCommit = getPrCommit();
+        if (!myContract.commit) {
+            reject('No commit() method on contract!');
+        }
+        if (!client.id) {
+            reject(`Missing client id for client #${i}. Client id is the result of join(). Did join() finished correctly?`);
+        }
+
+        console.log(`Commit(): client.id=${client.id} pubCommit=${JSON.stringify(pubCommit)} prCommit=${JSON.stringify(prCommit)}`);
+
+        myContract.commit(client.id, pubCommit, prCommit, {
+            from: client.address,
+            gasLimit: 3000000
+        }, (err, result) => {
+            if (err !== null) {
+                console.log(`Commit(): Failed to commit() with client #${i} ${client.address}. msg=${err.msg} Err=${JSON.stringify(err)}`);
+                return reject(err);
+            }
+            console.log(`Commit(): Client #${i} ${client.address} committed successfully. Result: ${result}`);
+            client.id = result;
+            resolve(result);
+        });
+    });
+}
+
+
+function signAndVerify() {
+    return true;
+}
+
+// This should call Go code - it is just a mock here
+function getPubCommit() {
+
+    const SOME_BIG_NUMBER = '0xfc9e0eefe9f3a5101b7c025b217c03c95dbf9bb4f2d1d46db238e305af104103';
+    const res = [];
+    const pubCommitLength = THRESHOLD * 2 + 2;
+    for (let i = 0; i < pubCommitLength; i++) {
+        res.push(web3.toBigNumber(SOME_BIG_NUMBER));
+    }
+    return res;
+}
+
+// This should call Go code - it is just a mock here
+function getPrCommit() {
+    const ANOTHER_BIG_NUMBER = '0xfc9e0eefe9f3a5101b7c025b217c03c95dbf9bb4f2d1d46db238e305af104104';
+    const res = [];
+    const prCommitLength = CLIENT_COUNT;
+    for (let i = 0; i < prCommitLength; i++) {
+        res.push(web3.toBigNumber(ANOTHER_BIG_NUMBER));
+    }
+    return res;
 }
