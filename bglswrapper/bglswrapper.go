@@ -1,4 +1,4 @@
-package bgls
+package bglswrapper
 
 import (
   "crypto/rand"

@@ -8,9 +8,9 @@ import (
   "strconv"
   "strings"
   "encoding/json"
-  "github.com/orbs-network/bls-bn-curve/bglswrapper/bgls"
-  "github.com/stretchr/testify/assert"
-  "math"
+  "github.com/orbs-network/bls-bn-curve/bglswrapper"
+  "math/rand"
+  "github.com/Project-Arda/bgls/bgls"
 )
 
 // Usage examples:
@@ -22,10 +22,10 @@ const POINT_ELEMENTS = 4
 const BIGINT_BASE = 10
 
 type DataForCommit struct {
-  coefficients []*big.Int
-  pubCommitG1  []Point
-  pubCommitG2  []Point
-  prvCommit    []*big.Int
+  coefficientsAll [][]*big.Int
+  pubCommitG1All  [][]Point
+  pubCommitG2All  [][]Point
+  prvCommitAll    [][]*big.Int
 }
 
 // Conversions between array of numbers and G1/G2 points:
@@ -43,11 +43,14 @@ func getPrCommit() {
 
 }
 
-func GetCommitDataForAllParticipants(curve CurveSystem, n int, threshold int) (map[string]interface{}, error) {
-  coefsAll := make([][]*big.Int, n)
-  commitG1All := make([][]Point, n)
-  commitG2All := make([][]Point, n)
-  commitPrvAll := make([][]*big.Int, n) // private commit of participant to all
+func GetCommitDataForAllParticipants(curve CurveSystem, n int, threshold int) (*DataForCommit, error) {
+
+  allData := new(DataForCommit)
+
+  //coefsAll := make([][]*big.Int, n)
+  //commitG1All := make([][]Point, n)
+  //commitG2All := make([][]Point, n)
+  //commitPrvAll := make([][]*big.Int, n) // private commit of participant to all
   // Generate coefficients and public commitments for each participant
   for participant := 0; participant < n; participant++ {
 
@@ -57,42 +60,42 @@ func GetCommitDataForAllParticipants(curve CurveSystem, n int, threshold int) (m
 	commitPrv := make([]*big.Int, n)
 	for i := 0; i < threshold+1; i++ {
 	  var err error
-	  coefs[i], commitG1[i], commitG2[i], err = bgls.CoefficientGen(curve)
+	  coefs[i], commitG1[i], commitG2[i], err = bglswrapper.CoefficientGen(curve)
 	  if err != nil {
-		return nil, err
+		return allData, err
 	  }
-	  verifyResult := bgls.VerifyPublicCommitment(curve, commitG1[i], commitG2[i])
+	  verifyResult := bglswrapper.VerifyPublicCommitment(curve, commitG1[i], commitG2[i])
 	  fmt.Println("VerifyPublicCommitment() passed? ", verifyResult)
 	}
 
 	j := big.NewInt(1)
 	for i := 0; i < n; i++ {
-	  commitPrv[i] = bgls.GetPrivateCommitment(curve, j, coefs)
+	  commitPrv[i] = bglswrapper.GetPrivateCommitment(curve, j, coefs)
 	  j.Add(j, big.NewInt(1))
 	}
-	coefsAll[participant] = coefs
-	commitG1All[participant] = commitG1
-	commitG2All[participant] = commitG2
-	commitPrvAll[participant] = commitPrv
+	allData.coefficientsAll[participant] = coefs
+	allData.pubCommitG1All[participant] = commitG1
+	allData.pubCommitG2All[participant] = commitG2
+	allData.prvCommitAll[participant] = commitPrv
   }
 
-  return map[string]interface{}{"coefficients": coefsAll, "pubCommitG1": commitG1All, "pubCommitG2": commitG2All, "prvCommit": commitPrvAll}, nil
+  return allData, nil
 }
 
-func SignAndVerify(curve CurveSystem, n int, threshold int, data map[string]interface{}) (bool, error) {
+func SignAndVerify(curve CurveSystem, n int, threshold int, data *DataForCommit) (bool, error) {
   // == Verify phase ==
 
-  coefsAll := data["coefficients"]
-  commitG1All := data["pubCommitG1"]
-  commitG2All := data["pubCommitG2"]
-  commitPrvAll := data["prvCommit"]
+  //coefsAll := data.coefficientsAll
+  //commitG1All := data.pubCommitG1All
+  //commitG2All := data.pubCommitG2All
+  //commitPrvAll := data.prvCommitAll
 
   j := big.NewInt(1)
   for participant := 0; participant < n; participant++ {
 	for commitParticipant := 0; commitParticipant < n; commitParticipant++ {
-	  prv := commitPrvAll[commitParticipant][participant]
-	  pub := commitG1All[commitParticipant]
-	  if res := bgls.VerifyPrivateCommitment(curve, j, prv, pub); !res {
+	  prv := data.prvCommitAll[commitParticipant][participant]
+	  pub := data.pubCommitG1All[commitParticipant]
+	  if res := bglswrapper.VerifyPrivateCommitment(curve, j, prv, pub); !res {
 		return false, fmt.Errorf("private commit doesn't match public commit")
 	  }
 	}
@@ -104,13 +107,13 @@ func SignAndVerify(curve CurveSystem, n int, threshold int, data map[string]inte
   pkAll := make([][]Point, n)
   pubCommitG2Zero := make([]Point, n)
   for participant := 0; participant < n; participant++ {
-	pkAll[participant] = bgls.GetAllPublicKey(curve, threshold, commitG2All)
-	pubCommitG2Zero[participant] = commitG2All[participant][0]
+	pkAll[participant] = bglswrapper.GetAllPublicKey(curve, threshold, data.pubCommitG2All)
+	pubCommitG2Zero[participant] = data.pubCommitG2All[participant][0]
 	prvCommit := make([]*big.Int, n)
 	for commitParticipant := 0; commitParticipant < n; commitParticipant++ {
-	  prvCommit[commitParticipant] = commitPrvAll[commitParticipant][participant]
+	  prvCommit[commitParticipant] = data.prvCommitAll[commitParticipant][participant]
 	}
-	skAll[participant] = bgls.GetSecretKey(prvCommit)
+	skAll[participant] = bglswrapper.GetSecretKey(prvCommit)
   }
 
   pkOk := true
@@ -130,27 +133,28 @@ func SignAndVerify(curve CurveSystem, n int, threshold int, data map[string]inte
 	return false, fmt.Errorf("failed PK verification")
   }
 
-  groupPk := bgls.GetGroupPublicKey(curve, pubCommitG2Zero)
+  groupPk := bglswrapper.GetGroupPublicKey(curve, pubCommitG2Zero)
   //Verify the secret key matches the public key
   coefsZero := make([]*big.Int, n)
   for participant := 0; participant < n; participant++ {
-	coefsZero[participant] = coefsAll[participant][0]
+	coefsZero[participant] = data.coefficientsAll[participant][0]
   }
-  groupSk := bgls.GetPrivateCommitment(curve, big.NewInt(1), coefsZero)
-  if groupPk != LoadPublicKey(curve, groupSk) {
+  groupSk := bglswrapper.GetPrivateCommitment(curve, big.NewInt(1), coefsZero)
+  if groupPk != bgls.LoadPublicKey(curve, groupSk) {
 	return false, fmt.Errorf("groupPK doesnt match to groupSK")
   }
 
   // == Sign and reconstruct ==
   d := make([]byte, 64)
   var err error
-  _, err = math.rand.Read(d)
+  _, err = rand.Read(d)
   //assert.Nil(t, err, "msg data generation failed")
   sigs := make([]Point, n)
   for participant := 0; participant < n; participant++ {
 	sigs[participant] = bgls.Sign(curve, skAll[participant], d)
-	assert.True(t, bgls.VerifySingleSignature(curve, sigs[participant], pkAll[0][participant], d),
-	  "signature invalid")
+	if !bgls.VerifySingleSignature(curve, sigs[participant], pkAll[0][participant], d) {
+	  return false, fmt.Errorf("signature invalid")
+	}
   }
 
   indices := make([]*big.Int, n)
@@ -160,18 +164,24 @@ func SignAndVerify(curve CurveSystem, n int, threshold int, data map[string]inte
 	indices[participant] = big.NewInt(0).Set(index)
   }
 
-  groupSig1, err := bgls.SignatureReconstruction(
+  groupSig1, err := bglswrapper.SignatureReconstruction(
 	curve, sigs[:threshold+1], indices[:threshold+1])
-  assert.Nil(t, err, "group signature reconstruction fail")
-  assert.True(t, bgls.VerifySingleSignature(curve, groupSig1, groupPk, d),
-	"group signature invalid")
+  if err != nil {
+	return false, fmt.Errorf("group signature reconstruction fail")
+  }
+  if !bgls.VerifySingleSignature(curve, groupSig1, groupPk, d) {
+	return false, fmt.Errorf("group signature invalid")
+  }
 
-  groupSig2, err := bgls.SignatureReconstruction(
+  groupSig2, err := bglswrapper.SignatureReconstruction(
 	curve, sigs[n-(threshold+1):], indices[n-(threshold+1):])
-  assert.Nil(t, err, "group signature reconstruction fail")
-  assert.True(t, bgls.VerifySingleSignature(curve, groupSig2, groupPk, d),
-	"group signature invalid")
-  assert.True(t, groupSig1.Equals(groupSig2), "group signatures are not equal")
+
+  if err != nil {
+	return false, fmt.Errorf("group signature reconstruction fail")
+  }
+  if !bgls.VerifySingleSignature(curve, groupSig2, groupPk, d) {
+	return false, fmt.Errorf("group signatures are not equal")
+  }
 
   return true, nil
 
@@ -226,14 +236,14 @@ func main() {
   case "SignAndVerify":
 	n := toInt(flag.Arg(0))
 	threshold := toInt(flag.Arg(1))
-	data := json.Unmarshal(flag.Arg(2))
-	isOk, err := SignAndVerify(curve, n, threshold, data)
+	var data DataForCommit
+	err := json.Unmarshal([]byte(flag.Arg(2)), &data)
+	isOk, err := SignAndVerify(curve, n, threshold, &data)
 	if err != nil {
 	  fmt.Println("Error in SignAndVerify():", err)
 	  return
 	}
 	fmt.Printf("%v", isOk)
-
 
 	/*
 	  case "GetDataForCommit":
