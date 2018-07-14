@@ -1,67 +1,104 @@
 pragma solidity ^0.4.0;
 
 
-contract dkg {
+contract dkgG2 {
 
-    /** 
+    /**
      * DKG phases:
-     * 
-     * 0) Create the contract with a threshold (t) and 
+     *
+     * 0) Create the contract with a threshold (t) and
      * number of participants.
-     * 
-     * 1) Each of the participants sends a deposit and 
+     *
+     * 1) Each of the participants sends a deposit and
      * a public key address that he owns.
      *
      * (not on contract) - each participant generates t+1
      * random sampled coefficients from the (mod p) field.
      *
-     * 2) Each of the participants sends its public commitments 
-     * (the generator exponentiated t+1 coefficients) and 
-     * encrypted private commitments for all of the other 
+     * 2) Each of the participants sends its public commitments
+     * (the generator exponentiated t+1 coefficients) and
+     * encrypted private commitments for all of the other
      * particpants.
      *
      * 3) Complaint - each participant can send a complaint tx
      * about one of the followings:
      *  a) 2 distinct participants offered the same public commitment
            (one is enough).
-     *  b) Some participant offered invalid commitment (invalid is: 
+     *  b) Some participant offered invalid commitment (invalid is:
      *     duplicated, insufficient, )
      *  c) Time out.
-     *  d) 
+     *  d)
      *
-     *
+     */
+
+
+    /**
+     * Important note: at this point this contract purpose is as a
+     * POC only, therefore its security in unreliable - moreover
+     * it is implemented in a way that allows anyone to easily
+     * calculate all of the other participants' secret keys!
      */
 
 
 
     struct Participant {
-        bytes32 pk;
-        mapping (uint16 => uint256[2]) publicCommitments; // coefficient index to commitment
-        // TODO: should be encrypted (and possibly off chain). 
+        address pk;
+        mapping (uint16 => uint256[2]) publicCommitmentsG1; // coefficient index to commitment
+        mapping (uint16 => uint256[4]) publicCommitmentsG2;
+        // TODO: should be encrypted (and possibly off chain).
         mapping (uint16 => uint256) privateCommitments; // node's index to its commitment
         bool isCommited;
     }
-    
+
+    enum Phase { Enrollment, Commit, PostCommit, EndSuccess, EndFail } // start from 0
+
+
+    event PhaseChange(
+        Phase phase
+    );
+    event NewCommit(
+        uint16 committerIndex,
+        uint256[] pubCommitG1,
+        uint256[] pubCommitG2,
+        uint256[] prvCommit
+    );
+    event ParticipantJoined(
+        uint16 index
+    );
+
+
+    Phase curPhase;
+
      // The curve y^2 = x^3 + a*x + b (x,y in modulo n field)
     uint256 public constant p = 0x30644E72E131A029B85045B68181585D97816A916871CA8D3C208C16D87CFD47;
     uint256 public constant q = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001;
-    uint256 public constant a = 0;
-    uint256 public constant b = 3;
+    //uint256 public constant a = 0;
+    //uint256 public constant b = 3;
 
-    // Generator (on the curve)
-    uint256[2] public g = [
-        0x0000000000000000000000000000000000000000000000000000000000000001, 
-        0x0000000000000000000000000000000000000000000000000000000000000002];
+    // G1 generator (on the curve)
+    uint256[2] public g1 = [
+        0x0000000000000000000000000000000000000000000000000000000000000001,
+        0x0000000000000000000000000000000000000000000000000000000000000002
+    ];
+    // G2 generator (on the curve)
+    uint256[4] public g2 = [
+        0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2,
+        0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed,
+        0x90689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b,
+        0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa
+    ];
 
-    uint256 constant depositGas = 1000;
-    uint16 constant phaseTimeBlock = 1000; // time (in blocks) between phases
-    
+    uint256 public depositWei;
+
 
     uint16 public t; // threshold
     uint16 public n; // numer of participants;
     uint16 public curN; // current num of participants
-    
-    uint256 phaseStart;
+
+    uint256 public phaseStart;
+    uint256 public constant commitTimeout = 100;
+
+
 
 
 
@@ -69,13 +106,16 @@ contract dkg {
     mapping (uint16 => Participant) public participants;
 
 
-    constructor(uint16 threshold, uint16 numParticipants) public 
+    constructor(uint16 threshold, uint16 numParticipants, uint deposit) public
     {
         t = threshold;
         n = numParticipants;
+        depositWei = deposit;
+
+        curPhase = Phase.Enrollment;
 
         if (n <= t || t == 0) {
-            revert();
+            revert("wrong input");
         }
 
 
@@ -83,121 +123,261 @@ contract dkg {
     }
 
 
+
+    modifier checkDeposit() {
+        if (msg.value != depositWei) revert("wrong deposit");
+        _;
+    }
+    modifier checkAuthorizedSender(uint16 index) {
+        if (participants[index].pk != msg.sender) revert("not authorized sender");
+        _;
+    }
+    modifier beFalse(bool term) {
+        if (term) revert();
+        _;
+    }
+    modifier inPhase(Phase phase) {
+        if(curPhase != phase) revert("wrong phase");
+        _;
+    }
+    modifier notInPhase(Phase phase) {
+        if(curPhase == phase) revert("wrong phase");
+        _;
+    }
+
+
+
     // Join the DKG (enrollment - phase 1).
-    function join(bytes32 pk) external returns(uint16 index)
+    function join()
+        checkDeposit()
+        inPhase(Phase.Enrollment)
+        external payable
+        returns(uint16 index)
     {
-        // TODO: deposit funds, phase timeout
+        // TODO: phase timeout
 
         uint16 cn = curN;
-        
-        // Abort if capacity on participants was reached
-        if(cn == n) {
-            revert();
-        }
+        address sender = msg.sender;
+
 
         // Check the pk isn't registered already
         for(uint16 i = 1; i <= cn; i++) {
-            if(participants[i].pk == pk) {
-                revert();
+            if(participants[i].pk == sender) {
+                revert("already joined");
             }
         }
 
         cn++;
-        participants[cn] = Participant({pk: pk, isCommited: false});
+        participants[cn] = Participant({pk: sender, isCommited: false});
 
         curN = cn;
+
+        // Abort if capacity on participants was reached
+        if(cn == n) {
+            curPhase = Phase.Commit;
+            emit PhaseChange(Phase.Commit);
+        }
+
+        emit ParticipantJoined(cn);
         return cn;
-    }    
-    
-    
-    // Send commitments (phase 2). 
+    }
+
+
+    // Send commitments (phase 2).
     //
-    // pubCommit is composed of t+1 commitments to local randomly sampled
-    // coefficients. Each commitment should be on the curve (affine 
+    // pubCommitG1 is composed of t+1 commitments to local randomly sampled
+    // coefficients. Each commitment should be on the G1 curve (affine
     // coordinates) and therefore it has 2 coordinates. Thus, the input array
     // is of size (2t+2) and the i'th commitment will be in indices (2i) and
     // (2i+1).
+    //
+    // pubCommitG2 is composed of t+1 commitments to same sampled coefficients
+    // from pubCommitG1. Each commitment should be on the G2 curve (affine
+    // coordinates) and therefore it has 4 coordinates. Thus, the input array
+    // is of size (4t+4) and the i'th commitment will be in indices (4i),(4i+1),
+    // (4i+2),(4i+3).
+    //
     // prCommit is an array of size n, where the first index matches the
     // first participant (participant index 1) and so forth. The commitment
     // is a calculation on the localy generated polynomial in the particpant's
-    // index. The senderIndex private commitment is ignored and can be anything 
+    // index. The senderIndex private commitment is ignored and can be anything
     // (but can't be skipped).
-    function commit(uint16 senderIndex, uint256[] pubCommit, uint256[] prCommit) external
+    //
+    // Note that this function does not verifies the committed data, it
+    // should be done outside of this contract scope. In case of an
+    // invalid committed data use complaints.
+    function commit(uint16 senderIndex, uint256[] pubCommitG1,
+                    uint256[] pubCommitG2, uint256[] prCommit)
+        inPhase(Phase.Commit)
+        checkAuthorizedSender(senderIndex)
+        beFalse(participants[senderIndex].isCommited)
+        external
         returns(bool)
     {
-        // TODO: phase timeout, make prCommit encrypted, verify sender 
+        // TODO: phase timeout, make prCommit encrypted, verify sender
         // index matches the sender's address.
 
-        uint16 nParticipants = n;
+        assignCommitments(senderIndex, pubCommitG1, pubCommitG2, prCommit);
 
-        // Check all participants are registered and sender index is valid
-        if(senderIndex == 0 || senderIndex > nParticipants) {
-            revert();
+        uint16 committedNum = curN - 1;
+        curN = committedNum;
+
+        if(committedNum == 0) {
+            curPhase = Phase.PostCommit;
+            phaseStart = block.number;
+            emit PhaseChange(Phase.PostCommit);
         }
+    }
+
+
+    // Assigns the commitments to the sender with index of senderIndex.
+    function assignCommitments(uint16 senderIndex, uint256[] pubCommitG1,
+                               uint256[] pubCommitG2, uint256[] prCommit)
+        internal
+    {
+        // TODO: consider merging the following loops to save gas
+        uint16 nParticipants = n;
 
         uint16 threshold = t;
 
         // Verify input size
-        if(pubCommit.length != (threshold*2 + 2) || prCommit.length != nParticipants) {
-            revert();
-        } 
+        if(pubCommitG1.length != (threshold*2 + 2)
+           || pubCommitG2.length != (threshold*4 + 4)
+           || prCommit.length != nParticipants) {
 
-        // Verify sender first commit
-        if(participants[senderIndex].isCommited) {
-            revert();
+            revert("input size invalid");
         }
 
-
-        // TODO: consider merging the following loops to save gas
-
-        // Assign public commitments
-        for(uint16 i = 0; i < threshold; i++) {
-            uint16 arrayPos = 2*i;
-            participants[senderIndex].publicCommitments[i][0] = pubCommit[arrayPos];
-            participants[senderIndex].publicCommitments[i][1] = pubCommit[arrayPos+1];
+        // Assign public commitments from G1 and G2
+        for(uint16 i = 0; i < (threshold+1); i++) {
+            participants[senderIndex].publicCommitmentsG1[i] = [pubCommitG1[2*i], pubCommitG1[2*i+1]];
+            participants[senderIndex].publicCommitmentsG2[i] = [
+                pubCommitG2[4*i], pubCommitG2[4*i+1], pubCommitG2[4*i+2], pubCommitG2[4*i+3]
+            ];
         }
 
         // Assign private commitments
-        for(uint8 j = 1; j <= nParticipants; j++) {
-            if(senderIndex != j) {
-                participants[senderIndex].privateCommitments[j] = prCommit[j-1];
+        for(i = 1; i <= nParticipants; i++) {
+            if(senderIndex != i) {
+                participants[senderIndex].privateCommitments[i] = prCommit[i-1];
             }
         }
-        
+
+        participants[senderIndex].isCommited = true;
+        emit NewCommit(senderIndex, pubCommitG1, pubCommitG2, prCommit);
     }
+
+
+    // Call this when in Phase.PostCommit for more than commitTimeout
+    // blocks and no comlaint has to be made.
+    function phaseChange()
+        inPhase(Phase.PostCommit)
+        external
+    {
+        uint curBlockNum = block.number;
+
+        if(curBlockNum > (phaseStart+commitTimeout)) {
+            curPhase = Phase.EndSuccess;
+            emit PhaseChange(Phase.EndSuccess);
+        }
+        else {
+            revert();
+        }
+    }
+
+
+    // Returns the group PK.
+    // This can only be performed after the DKG has ended. This
+    // means only when the current phase is Phase.End .
+    function getGroupPK()
+        inPhase(Phase.EndSuccess)
+        public returns(uint256[2] groupPK)
+    {
+
+        uint16 nParticipants = n;
+        groupPK = participants[1].publicCommitmentsG1[0];
+
+        for(uint16 i = 2; i <= nParticipants; i++) {
+            groupPK = ecadd(groupPK, participants[i].publicCommitmentsG1[0]);
+        }
+    }
+
 
 
     ////////////////
     // Complaints //
     ////////////////
 
-    // A complaint on some private commitment. 
-    // 
-    function complaintPrivateCommit(uint16 complainerIndex, 
-                                    uint16 accusedIndex) public 
-        returns (bool) 
-    {
-        // TODO: refund deposits, a secret key should be inputted so the
-        // encrypted private commitment would reveal 
 
-        uint16 nParticipants = n;
-        // Check for valid indices 
-        if(complainerIndex == 0 || complainerIndex > nParticipants || 
-           accusedIndex == 0 || accusedIndex > nParticipants) {
-            
-            revert();
+    // A complaint on some public commit. If for some reason this
+    // function fails it will slash the complainer deposit! (unless some
+    // unauthorized address made the transaction or the wrong phase).
+    //
+    // The complaint should be called when the public commitments coming
+    // from the G1 group does not match to the ones from G2 group (using pairing).
+    function complaintPublicCommit(uint16 complainerIndex, uint16 accusedIndex,
+                                   uint16 pubCommitIndex)
+        checkAuthorizedSender(complainerIndex)
+        notInPhase(Phase.EndFail)
+        notInPhase(Phase.EndSuccess)
+        public
+    {
+        curPhase = Phase.EndFail;
+        emit PhaseChange(Phase.EndFail);
+
+        Participant storage accused = participants[accusedIndex];
+        if(!accused.isCommited) {
+            slash(complainerIndex);
         }
 
-        Participant accused = participants[accusedIndex];
+
+        if (pairingCheck(accused.publicCommitmentsG1[pubCommitIndex],
+            g2, g1, accused.publicCommitmentsG2[pubCommitIndex])) {
+
+            slash(complainerIndex);
+        }
+        else {
+            slash(accusedIndex);
+        }
+
+    }
+
+    // A complaint on some private commitment. If for some reason this
+    // function fails it will slash the complainer deposit! (unless some
+    // unauthorized address made the transaction or the wrong phase).
+    //
+    // The complaint should be called when some private commitment does
+    // not match to the public commitment.
+    function complaintPrivateCommit(uint16 complainerIndex,
+                                    uint16 accusedIndex)
+        checkAuthorizedSender(complainerIndex)
+        notInPhase(Phase.EndFail)
+        notInPhase(Phase.EndSuccess)
+        public
+    {
+        // TODO: a secret key should be inputted so the encrypted private
+        // commitment would reveal, also a check for edge cases has to be
+        // done (e.g., when no one has yet committed)
+
+        curPhase = Phase.EndFail;
+        emit PhaseChange(Phase.EndFail);
+
+        uint16 nParticipants = n;
+
+        Participant storage accused = participants[accusedIndex];
+        if(!accused.isCommited) {
+            slash(complainerIndex);
+        }
+
         uint256 prvCommit = accused.privateCommitments[complainerIndex];
 
         uint256[2] memory temp;
         uint256[2] memory RHS;
-        uint256[2] memory LHS = ecmul(g, prvCommit);
+        uint256[2] memory LHS = ecmul(g1, prvCommit);
 
 
         for(uint16 i = 0; i < t+1; i++) {
-            temp = (ecmul(accused.publicCommitments[i], complainerIndex**i));
+            temp = (ecmul(accused.publicCommitmentsG1[i], complainerIndex**i));
             if(i == 0) {
                 RHS = temp;
             }
@@ -206,27 +386,39 @@ contract dkg {
             }
         }
 
-        // TODO slashing
-        return isEqualPoints(LHS, RHS);
-    }
-    
 
-
-    function getGroupPK() public returns(uint256[2] groupPK)
-    {
-        // TODO end of commit phase
-        uint16 nParticipants = n;
-        groupPK = participants[1].publicCommitments[0];
-
-        for(uint16 i = 2; i <= nParticipants; i++) {
-            groupPK = ecadd(groupPK, participants[i].publicCommitments[0]);
+        if (isEqualPoints(LHS, RHS)) {
+            slash(complainerIndex);
+        }
+        else {
+            slash(accusedIndex);
         }
     }
 
 
-    function getAllPKs() public 
-    {
-        
+
+    // Divides the deposited balance in the contract between
+    // the enrolled paricipants except for the participant
+    // with the slashedIndex. Send slashedIndex = 0 in order
+    // to divide it between all the participants (no slashing).
+    function slash(uint16 slashedIndex) private {
+
+        uint16 nParticipants = n;
+        uint256 amount;
+        if (slashedIndex == 0) {
+            amount = address(this).balance/nParticipants;
+        }
+        else {
+            amount = address(this).balance/(nParticipants-1);
+        }
+
+        for (uint16 i = 1; i < (nParticipants+1); i++) {
+            if (i != slashedIndex) {
+                if (!participants[i].pk.send(amount)) {
+                    revert();
+                }
+            }
+        }
     }
 
 
@@ -240,7 +432,7 @@ contract dkg {
 
 
     function ecmul(uint256[2] p0, uint256 scalar) public view
-        returns(uint256[2] p) 
+        returns(uint256[2] p1)
     {
         uint256[3] memory input;
         input[0] = p0[0];
@@ -249,7 +441,7 @@ contract dkg {
 
         assembly{
             // call ecmul precompile
-            if iszero(call(not(0), 0x07, 0, input, 0x60, p, 0x40)) {
+            if iszero(call(not(0), 0x07, 0, input, 0x60, p1, 0x40)) {
                 revert(0, 0)
             }
         }
@@ -258,7 +450,7 @@ contract dkg {
 
     function ecadd(uint256[2] p0,
                    uint256[2] p1) public view
-        returns(uint256[2] p) 
+        returns(uint256[2] p2)
     {
         uint256[4] memory input;
         input[0] = p0[0];
@@ -267,12 +459,32 @@ contract dkg {
         input[3] = p1[1];
 
         assembly{
-            
+
             // call ecadd precompile
-            if iszero(call(not(0), 0x06, 0, input, 0x80, p, 0x40)) {
+            if iszero(call(not(0), 0x06, 0, input, 0x80, p2, 0x40)) {
                 revert(0, 0)
             }
         }
+    }
+
+
+    function pairingCheck(uint256[2] a, uint256[4] x, uint256[2] b, uint256[4] y)
+        internal
+        returns (bool)
+    {
+        //returns e(a,x) == e(b,y)
+        uint256[12] memory input = [
+            a[0], a[1], x[0], x[1], x[2], x[3],
+            b[0], p - b[1], y[0], y[1], y[2], y[3]
+        ];
+        uint[1] memory result;
+
+        assembly {
+            if iszero(call(not(0), 0x08, 0, input, 0x180, result, 0x20)) {
+                revert(0, 0)
+            }
+        }
+        return result[0]==1;
     }
 
 
@@ -284,3 +496,72 @@ contract dkg {
     }
 
 }
+
+
+/**
+ Test parameters:
+
+    n=2
+    t=1
+
+ coefficients:
+    a0) 54379457673493
+    a1) 23950433293405
+
+    b0) 453845345602931234235
+    b1) 976507650679506234134
+
+
+ public commitments:
+    a0)
+    1368041971066725411361239018179403078339688804905262551154469895335979601856
+    1618821492510491564023544834479645350362276877645830361512548330678288690656
+    a1)
+    2631817276443378672842587294280308402376367224288772184477397977654447923479
+    10839063031804877909681801875549944362615153185887194276974645822919437293936
+
+
+
+
+    b0)
+    13557179362105442634413454166511695479402464592547795407903173557675549038583
+    14036788543633373773860064791695546493243519155298095713201690292908488603901
+    b1)
+    1410561832783565967033505993299263011778160659525151177822679323808323926727
+    13048336431799703732972170157397576895462246813007390422018149570212241640252
+
+
+
+ private commitments:
+    fa(2)
+    102280324260303
+
+    fb(1)
+    1430352996282437468369
+
+
+Group PK:
+    5837875810486042432133468170632608166601746087751836698563291230806091472694,
+    20890074343725101418521449931290202203738610819454311822513791170653396069990
+
+
+    ## Commit
+
+    1,
+    ["0x30648c8ef4e8e38d2db668db8a4cab5513343aad935530559090e8a51354fc0",
+    "0x39438725e6ce47a9b49d4a0b2d90e1cee07d3d7e9a44adb9c0a3cf84078ade0",
+    "0x5d18e484aeddc886ba162e2fa4bf8bcc125d32230a3fbea6e39ef74de3d6117",
+    "0x17f6b138a7105622c493ac45d228e9c858544c47227f27a548942c2f01d59970"],
+    ["0x0000000000000000000000000000000000000000000000000000000000000000",
+    "0x00000000000000000000000000000000000000000000000000005d05fe6521cf"]
+
+    2,
+    ["0x1df91772c249f1b2a7e539242ed9eb60e1475f159a376614e91de79c644097f7",
+    "0x1f088a7004f9c9035af5f4686a5494f576415da8de528c40a67702c5399338fd",
+    "0x31e598642c78a683eedf66cf7cd4a35a3dd5b5fd8ea947a1c53ab867154fac7",
+    "0x1cd918c17d9ea92a1a3efb8a999d577d06058a1b205e99769bdc06b6686c8b3c"],
+    ["0x00000000000000000000000000000000000000000000004d8a22a7c8ae5000d1",
+    "0x0000000000000000000000000000000000000000000000000000000000000000"]
+
+
+ */
