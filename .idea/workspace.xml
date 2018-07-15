@@ -7,8 +7,6 @@
     <list default="true" id="a09d8812-db46-4c8c-934a-2686e83d6a83" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bglsmain.go" beforeDir="false" afterPath="$PROJECT_DIR$/bglsmain.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bglswrapper/bglswrapper_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bglswrapper/bglswrapper_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contracts/dkg.sol" beforeDir="false" afterPath="$PROJECT_DIR$/contracts/dkgG2.sol" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/bglswrapper.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/bglswrapper.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/bgls_test.js" beforeDir="false" afterPath="$PROJECT_DIR$/test/bgls_test.js" afterDir="false" />
     </list>
@@ -21,52 +19,25 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="bglsmain.go" pinned="false" current-in-tab="true">
+      <file leaf-file-name="bglsmain.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bglsmain.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="328">
-              <caret line="374" column="37" lean-forward="true" selection-start-line="374" selection-start-column="37" selection-end-line="374" selection-end-column="37" />
+            <state relative-caret-position="1241">
+              <caret line="73" column="51" selection-start-line="73" selection-start-column="51" selection-end-line="73" selection-end-column="51" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="curve.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../Project-Arda/bgls/curves/curve.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="416">
-              <caret line="58" column="21" selection-start-line="58" selection-start-column="21" selection-end-line="58" selection-end-column="21" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="dkg-client-test.js_" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/test/dkg-client-test.js_">
+      <file leaf-file-name="commit_data.json" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/commit_data.json">
           <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
-      <file leaf-file-name="curve.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../ethereum/go-ethereum/crypto/bn256/cloudflare/curve.go">
+      <file leaf-file-name="bglswrapper.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="380">
-              <caret line="186" column="21" selection-start-line="186" selection-start-column="21" selection-end-line="186" selection-end-column="21" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="altbn128.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../Project-Arda/bgls/curves/altbn128.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="434">
-              <caret line="69" column="16" selection-start-line="69" selection-start-column="16" selection-end-line="69" selection-end-column="16" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="bn256.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../ethereum/go-ethereum/crypto/bn256/cloudflare/bn256.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="416">
-              <caret line="119" column="13" selection-start-line="119" selection-start-column="13" selection-end-line="119" selection-end-column="13" />
+            <state relative-caret-position="17">
+              <caret line="1" column="22" selection-start-line="1" selection-start-column="22" selection-end-line="1" selection-end-column="22" />
             </state>
           </provider>
         </entry>
@@ -74,26 +45,17 @@
       <file leaf-file-name="dkgG2.sol" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/contracts/dkgG2.sol">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3247">
-              <caret line="191" column="46" selection-start-line="191" selection-start-column="46" selection-end-line="191" selection-end-column="46" />
+            <state relative-caret-position="329">
+              <caret line="170" column="46" selection-start-line="170" selection-start-column="46" selection-end-line="170" selection-end-column="46" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="bglswrapper.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
+      <file leaf-file-name="bgls_test.js" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/test/bgls_test.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="544">
-              <caret line="32" column="48" selection-start-line="32" selection-start-column="48" selection-end-line="32" selection-end-column="48" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="bglswrapper.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="663">
-              <caret line="39" column="33" selection-start-line="39" selection-start-column="33" selection-end-line="39" selection-end-column="33" />
+            <state relative-caret-position="431">
+              <caret line="161" column="48" selection-start-line="161" selection-start-column="48" selection-end-line="161" selection-end-column="48" />
             </state>
           </provider>
         </entry>
@@ -109,15 +71,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>threshol</find>
-      <find>point</find>
-      <find>curve</find>
-      <find>commitpr</find>
-      <find>signand</find>
-      <find>loadpublickey(</find>
-      <find>verify</find>
-      <find>dkg</find>
-      <find>inpha</find>
       <find>phasecha</find>
       <find>rand</find>
       <find>loa</find>
@@ -139,6 +92,15 @@
       <find>big</find>
       <find>altbn128Point1</find>
       <find>unma</find>
+      <find>commit</find>
+      <find>contract</find>
+      <find>should send tra</find>
+      <find>tobignu</find>
+      <find>eth_url</find>
+      <find>web3.</find>
+      <find>commitall</find>
+      <find>coeffici</find>
+      <find>commit da</find>
     </findStrings>
   </component>
   <component name="GOROOT" path="/usr/local/Cellar/go/1.10.3/libexec" />
@@ -171,10 +133,10 @@
         <option value="$PROJECT_DIR$/bglswrapper/bglsmain.go" />
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/bglswrapper/bglswrapper_test.go" />
-        <option value="$PROJECT_DIR$/src/bglswrapper.js" />
-        <option value="$PROJECT_DIR$/test/bgls_test.js" />
         <option value="$PROJECT_DIR$/contracts/dkgG2.sol" />
         <option value="$PROJECT_DIR$/bglsmain.go" />
+        <option value="$PROJECT_DIR$/src/bglswrapper.js" />
+        <option value="$PROJECT_DIR$/test/bgls_test.js" />
       </list>
     </option>
   </component>
@@ -193,10 +155,10 @@
     </packageJsonPaths>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-3440" />
-    <option name="y" value="-861" />
-    <option name="width" value="1720" />
-    <option name="height" value="1417" />
+    <option name="x" value="-255" />
+    <option name="y" value="-1057" />
+    <option name="width" value="1920" />
+    <option name="height" value="1057" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -214,12 +176,12 @@
             <path>
               <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
               <item name="bls-bn-curve" type="462c0819:PsiDirectoryNode" />
-              <item name="bglswrapper" type="462c0819:PsiDirectoryNode" />
+              <item name="contracts" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
               <item name="bls-bn-curve" type="462c0819:PsiDirectoryNode" />
-              <item name="contracts" type="462c0819:PsiDirectoryNode" />
+              <item name="node_modules" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
@@ -230,123 +192,6 @@
               <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
               <item name="bls-bn-curve" type="462c0819:PsiDirectoryNode" />
               <item name="test" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="Go SDK 1.10.3" type="20ee2d1f:SyntheticLibraryElementNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="Go SDK 1.10.3" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="Go SDK 1.10.3" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="builtin" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="ethereum" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="ethereum" type="462c0819:PsiDirectoryNode" />
-              <item name="go-ethereum" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="ethereum" type="462c0819:PsiDirectoryNode" />
-              <item name="go-ethereum" type="462c0819:PsiDirectoryNode" />
-              <item name="crypto" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="ethereum" type="462c0819:PsiDirectoryNode" />
-              <item name="go-ethereum" type="462c0819:PsiDirectoryNode" />
-              <item name="crypto" type="462c0819:PsiDirectoryNode" />
-              <item name="bn256" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="ethereum" type="462c0819:PsiDirectoryNode" />
-              <item name="go-ethereum" type="462c0819:PsiDirectoryNode" />
-              <item name="crypto" type="462c0819:PsiDirectoryNode" />
-              <item name="bn256" type="462c0819:PsiDirectoryNode" />
-              <item name="cloudflare" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="Project-Arda" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="Project-Arda" type="462c0819:PsiDirectoryNode" />
-              <item name="bgls" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="Project-Arda" type="462c0819:PsiDirectoryNode" />
-              <item name="bgls" type="462c0819:PsiDirectoryNode" />
-              <item name="curves" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -369,15 +214,15 @@
     <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/bglswrapper" />
       <recent name="$PROJECT_DIR$/dkgwrapper/dkg" />
       <recent name="$PROJECT_DIR$/bgls" />
       <recent name="$PROJECT_DIR$/dkg-client" />
-    </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -416,17 +261,17 @@
     </history-entry>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-3440" y="-861" width="1720" height="1417" extended-state="0" />
+    <frame x="-255" y="-1057" width="1920" height="1057" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Designer" order="3" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2717521" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.14962727" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="right" id="Cargo" order="4" />
       <window_info anchor="right" id="Palette&#9;" order="4" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32575756" />
-      <window_info anchor="bottom" id="Version Control" order="7" weight="0.4051282" />
+      <window_info anchor="bottom" id="Version Control" order="7" visible="true" weight="0.21344717" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.5576923" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
@@ -451,7 +296,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="No errors (still WIP)" />
-    <option name="LAST_COMMIT_MESSAGE" value="No errors (still WIP)" />
+    <MESSAGE value="JSON marshalling done; still need to unmarshal" />
+    <option name="LAST_COMMIT_MESSAGE" value="JSON marshalling done; still need to unmarshal" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -572,23 +418,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/commit_data.json">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="544">
-          <caret line="32" column="48" selection-start-line="32" selection-start-column="48" selection-end-line="32" selection-end-column="48" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test/bgls_test.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2193">
-          <caret line="129" column="51" selection-start-line="129" selection-start-column="51" selection-end-line="129" selection-end-column="51" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="663">
@@ -610,20 +439,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test/dkg-client-test.js_">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file:///usr/local/Cellar/go/1.10.3/libexec/src/fmt/print.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1003">
           <caret line="59" column="6" selection-start-line="59" selection-start-column="6" selection-end-line="59" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/contracts/dkgG2.sol">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3247">
-          <caret line="191" column="46" selection-start-line="191" selection-start-column="46" selection-end-line="191" selection-end-column="46" />
         </state>
       </provider>
     </entry>
@@ -636,7 +455,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/../../ethereum/go-ethereum/crypto/bn256/cloudflare/curve.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="380">
+        <state relative-caret-position="3162">
           <caret line="186" column="21" selection-start-line="186" selection-start-column="21" selection-end-line="186" selection-end-column="21" />
         </state>
       </provider>
@@ -650,29 +469,60 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/../../Project-Arda/bgls/curves/altbn128.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="434">
+        <state relative-caret-position="1173">
           <caret line="69" column="16" selection-start-line="69" selection-start-column="16" selection-end-line="69" selection-end-column="16" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../../ethereum/go-ethereum/crypto/bn256/cloudflare/bn256.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="416">
+        <state relative-caret-position="2023">
           <caret line="119" column="13" selection-start-line="119" selection-start-column="13" selection-end-line="119" selection-end-column="13" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../../Project-Arda/bgls/curves/curve.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="416">
+        <state relative-caret-position="986">
           <caret line="58" column="21" selection-start-line="58" selection-start-column="21" selection-end-line="58" selection-end-column="21" />
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/commit_data.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
     <entry file="file://$PROJECT_DIR$/bglsmain.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="328">
-          <caret line="374" column="37" lean-forward="true" selection-start-line="374" selection-start-column="37" selection-end-line="374" selection-end-column="37" />
+        <state relative-caret-position="1241">
+          <caret line="73" column="51" selection-start-line="73" selection-start-column="51" selection-end-line="73" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/dkg-client-test.js_">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="507">
+          <caret line="42" column="64" selection-start-line="42" selection-end-line="42" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="1" column="22" selection-start-line="1" selection-start-column="22" selection-end-line="1" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/contracts/dkgG2.sol">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="329">
+          <caret line="170" column="46" selection-start-line="170" selection-start-column="46" selection-end-line="170" selection-end-column="46" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/bgls_test.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="431">
+          <caret line="161" column="48" selection-start-line="161" selection-start-column="48" selection-end-line="161" selection-end-column="48" />
         </state>
       </provider>
     </entry>

@@ -383,8 +383,6 @@ func marshal(commitData *DataForCommit) ([]byte, error) {
 	}
   }
 
-
-
   for i:=0; i<len(commitData.PubCommitG1All); i++	{
 	jsonData.PubCommitG1All[i] = make([][]string, len(commitData.PubCommitG1All[i]))
 	for j:=0; j<len(commitData.PubCommitG1All[i]); j++ {
@@ -396,6 +394,7 @@ func marshal(commitData *DataForCommit) ([]byte, error) {
 	  jsonData.PubCommitG1All[i][j] = coordsStr
 	}
   }
+
   for i:=0; i<len(commitData.PubCommitG2All); i++	{
 	jsonData.PubCommitG2All[i] = make([][]string, len(commitData.PubCommitG2All[i]))
     for j:=0; j<len(commitData.PubCommitG2All[i]); j++ {
@@ -407,6 +406,7 @@ func marshal(commitData *DataForCommit) ([]byte, error) {
 	  jsonData.PubCommitG2All[i][j] = coordsStr
 	}
   }
+
   for i:=0; i<len(commitData.PrvCommitAll); i++	{
 	jsonData.PrvCommitAll[i] = make([]string, len(commitData.PrvCommitAll[i]))
 	for j:=0; j<len(commitData.PrvCommitAll[i]); j++ {

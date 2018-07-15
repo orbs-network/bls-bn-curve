@@ -2,6 +2,9 @@ const chai = require('chai');
 const dirtyChai = require('dirty-chai');
 const BigNumber = require('bignumber.js');
 const bgls = require('../src/bglswrapper.js');
+const Web3 = require('web3');
+const web3 = new Web3();
+
 
 // import expectRevert from './helpers/expectRevert';
 
@@ -59,7 +62,7 @@ const CLIENTS = [{
 
 const DKGG2 = artifacts.require('../contracts/dkgG2.sol');
 let dkgContract;
-let allCommitData;
+let allCommitDataJson;
 
 contract('DKG POC', (accounts) => {
   it('should send transaction to DKG contract method join()', async () => {
@@ -68,17 +71,17 @@ contract('DKG POC', (accounts) => {
     await joinAllClients();
   });
   it('should use BGLS to calculate coefficients, G1, G2, prv data for commit()', async () => {
-    allCommitData = bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT);
-    console.log(`Commit Data: ${allCommitData}`);
+    allCommitDataJson = bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT);
+    // console.log(`Commit Data: ${JSON.stringify(allCommitDataJson)}`);
   });
   it('should send transaction to DKG contract method commit()', async () => {
-    await commitAllClients(allCommitData);
+    await commitAllClients(allCommitDataJson);
   });
   it('should send transaction to DKG contract method closeContract()', async () => {
     await closeContract();
   });
   it('should use BGLS to sign and verify a sample message', async () => {
-    bgls.SignAndVerify(allCommitData);
+    bgls.SignAndVerify(allCommitDataJson);
   });
 });
 
@@ -122,18 +125,14 @@ async function joinAllClients() {
 
 /// Commit
 
-async function commitAllClients(allDataBuf) {
+async function commitAllClients(json) {
   console.log(` =====> commit <=====`);
   const promises = [];
-
-  const allData = JSON.parse(allDataBuf.toString());
-  console.log("commitAllClients(): allData=", JSON.stringify(allData));
-
-  const {coefsAll, commitG1All, commitG2All, commitPrvAll} = allData;
-
+  // console.log("commitAllClients(): allData=", JSON.stringify(json));
+  const {CoefficientsAll, PubCommitG1All, PubCommitG2All, PrvCommitAll} = json;
   CLIENTS.forEach((client, i) => {
     console.log(`Calling commit() with client #${i} ${client.address}`);
-    promises.push(commit(client, i, coefsAll[i], commitG1All[i], commitG2All[i], commitPrvAll[i]));
+    promises.push(commit(client, i, CoefficientsAll[i], PubCommitG1All[i], PubCommitG2All[i], PrvCommitAll[i]));
   });
   promises.push(() => {
     setTimeout(1000);
@@ -144,6 +143,7 @@ async function commitAllClients(allDataBuf) {
 
   return res;
 }
+
 
 async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
 
@@ -157,9 +157,16 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
     throw new Error(`Missing client id for client #${i}. Client id is the result of join(). Did join() finished correctly?`);
   }
 
-  // console.log(`Commit(): client.id=${client.id} pubCommit=${JSON.stringify(pubCommit)} prCommit=${JSON.stringify(prCommit)}`);
+  // TODO: each "e" below is a pair or a quad, not a single string, so toBiGNumber() on it fails.
+  // Instead, convert each "e" to and array of big numbers and then flatMap commitG1 so the resulting array will be x0,y0,x1,y1,... coords
+  // FIXME: what is e?????????? it doesn't work.
+  const commitG1BigInts = commitG1.map(e => e.split(",").map(numstr => web3.toBigNumber(numstr)));
+  const commitG2BigInts = commitG2.map(e => e.split(",").map(numstr => web3.toBigNumber(numstr)));
+  const prvBigInts = commitPrv.map(e => e.split(",").map(numstr => web3.toBigNumber(numstr)));
+
+  console.log(`Commit(): client.id=${client.id} commitG1BigInts(${typeof commitG1BigInts})=${commitG1BigInts.toString()} commitG2BigInts=${JSON.stringify(cocommitG2BigIntsmmitG2)} commitPrvBigInts=${JSON.stringify(prvBigInts)}`);
   console.log(`Commit(): calling with client.id=${client.id}`);
-  const result = await dkgContract.commit.call(client.id, commitG1, commitG2, commitPrv, {
+  const result = await dkgContract.commit.call(client.id, commitG1BigInts, commitG2BigInts, prvBigInts, {
     from: client.address,
     gasLimit: 3000000
   });

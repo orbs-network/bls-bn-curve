@@ -1,17 +1,16 @@
 const {execSync} = require('child_process');
-const fs = require('fs');
-const CWD = ".";
-const EXEC = "bls-bn-curve";
-const OUTPUT_FILE = "commit_data.json";
+const CWD = __dirname;
+const EXEC_PATH = `${CWD}/../bls-bn-curve`;
+const OUTPUT_PATH = `${CWD}/../commit_data.json`;
 
 function GetCommitDataForAllParticipants(threshold, clientCount) {
-  const cmd = `${CWD}/${EXEC} -func=GetCommitDataForAllParticipants ${clientCount} ${threshold} ${OUTPUT_FILE}`;
+  const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipants ${clientCount} ${threshold} ${OUTPUT_PATH}`;
 
   console.log(`Calling external command ${cmd}`);
   execSync(cmd, {cwd: CWD});
-  const allData = fs.readFileSync(`${CWD}/${OUTPUT_FILE}`);
-  console.log("Read data from file:", allData.toString());
-  return allData;
+  const json = require(OUTPUT_PATH);
+  console.log("Read data from file:", JSON.stringify(json));
+  return json;
 }
 
 
@@ -31,8 +30,8 @@ function GetCommitDataForAllParticipants(threshold, clientCount) {
 
 
 function SignAndVerify(threshold, clientCount) {
-  const allData = fs.readFileSync(OUTPUT_FILE);
-  const cmd = `${CWD}/${EXEC} -func=SignAndVerify ${clientCount} ${threshold} ${JSON.stringify(allData)}`;
+  const json = require(OUTPUT_PATH);
+  const cmd = `${EXEC_PATH} -func=SignAndVerify ${clientCount} ${threshold} ${JSON.stringify(json)}`;
   const stdoutBuffer = execSync(cmd, {cwd: CWD});
   console.log(stdoutBuffer.toString());
   return stdoutBuffer;
