@@ -11,6 +11,8 @@ import (
   "github.com/orbs-network/bls-bn-curve/bglswrapper"
   "math/rand"
   "github.com/Project-Arda/bgls/bgls"
+  "os"
+  "io/ioutil"
 )
 
 // Usage examples:
@@ -22,14 +24,25 @@ const POINT_ELEMENTS = 4
 const BIGINT_BASE = 10
 
 type DataForCommit struct {
-  coefficientsAll [][]*big.Int
-  pubCommitG1All  [][]Point
-  pubCommitG2All  [][]Point
-  prvCommitAll    [][]*big.Int
+  CoefficientsAll [][]*big.Int
+  PubCommitG1All  [][]Point
+  PubCommitG2All  [][]Point
+  PrvCommitAll    [][]*big.Int
 }
 
+type JsonDataForCommit struct {
+  CoefficientsAll [][]string
+  PubCommitG1All  [][][]string
+  PubCommitG2All  [][][]string
+  PrvCommitAll    [][]string
+}
+
+//func (data *DataForCommit) MarshalJSON() ([]byte, error) {
+//
+//}
+
 // Conversions between array of numbers and G1/G2 points:
-// func (g1Point *altbn128Point1) ToAffineCoords() []*big.Int
+//func (g1Point *altbn128Point1) ToAffineCoords() []*big.Int
 // func (g1Point *altbn128Point2) ToAffineCoords() []*big.Int
 // func (curve *altbn128) MakeG2Point(coords []*big.Int, check bool) (Point, bool)
 
@@ -45,7 +58,15 @@ func getPrCommit() {
 
 func GetCommitDataForAllParticipants(curve CurveSystem, n int, threshold int) (*DataForCommit, error) {
 
+  fmt.Printf("GetCommitDataForAllParticipants() called with n=%v threshold=%v\n", n, threshold)
+
+
   allData := new(DataForCommit)
+  allData.CoefficientsAll = make([][]*big.Int, n)
+  allData.PubCommitG1All = make([][]Point, n)
+  allData.PubCommitG2All = make([][]Point, n)
+  allData.PrvCommitAll = make([][]*big.Int, n)
+
 
   //coefsAll := make([][]*big.Int, n)
   //commitG1All := make([][]Point, n)
@@ -65,7 +86,7 @@ func GetCommitDataForAllParticipants(curve CurveSystem, n int, threshold int) (*
 		return allData, err
 	  }
 	  verifyResult := bglswrapper.VerifyPublicCommitment(curve, commitG1[i], commitG2[i])
-	  fmt.Println("VerifyPublicCommitment() passed? ", verifyResult)
+	  fmt.Printf("VerifyPublicCommitment() (p=%v i=%v) passed? %v\n", participant, i, verifyResult)
 	}
 
 	j := big.NewInt(1)
@@ -73,10 +94,10 @@ func GetCommitDataForAllParticipants(curve CurveSystem, n int, threshold int) (*
 	  commitPrv[i] = bglswrapper.GetPrivateCommitment(curve, j, coefs)
 	  j.Add(j, big.NewInt(1))
 	}
-	allData.coefficientsAll[participant] = coefs
-	allData.pubCommitG1All[participant] = commitG1
-	allData.pubCommitG2All[participant] = commitG2
-	allData.prvCommitAll[participant] = commitPrv
+	allData.CoefficientsAll[participant] = coefs
+	allData.PubCommitG1All[participant] = commitG1
+	allData.PubCommitG2All[participant] = commitG2
+	allData.PrvCommitAll[participant] = commitPrv
   }
 
   return allData, nil
@@ -85,16 +106,16 @@ func GetCommitDataForAllParticipants(curve CurveSystem, n int, threshold int) (*
 func SignAndVerify(curve CurveSystem, n int, threshold int, data *DataForCommit) (bool, error) {
   // == Verify phase ==
 
-  //coefsAll := data.coefficientsAll
-  //commitG1All := data.pubCommitG1All
-  //commitG2All := data.pubCommitG2All
-  //commitPrvAll := data.prvCommitAll
+  //coefsAll := data.CoefficientsAll
+  //commitG1All := data.PubCommitG1All
+  //commitG2All := data.PubCommitG2All
+  //commitPrvAll := data.PrvCommitAll
 
   j := big.NewInt(1)
   for participant := 0; participant < n; participant++ {
 	for commitParticipant := 0; commitParticipant < n; commitParticipant++ {
-	  prv := data.prvCommitAll[commitParticipant][participant]
-	  pub := data.pubCommitG1All[commitParticipant]
+	  prv := data.PrvCommitAll[commitParticipant][participant]
+	  pub := data.PubCommitG1All[commitParticipant]
 	  if res := bglswrapper.VerifyPrivateCommitment(curve, j, prv, pub); !res {
 		return false, fmt.Errorf("private commit doesn't match public commit")
 	  }
@@ -107,11 +128,11 @@ func SignAndVerify(curve CurveSystem, n int, threshold int, data *DataForCommit)
   pkAll := make([][]Point, n)
   pubCommitG2Zero := make([]Point, n)
   for participant := 0; participant < n; participant++ {
-	pkAll[participant] = bglswrapper.GetAllPublicKey(curve, threshold, data.pubCommitG2All)
-	pubCommitG2Zero[participant] = data.pubCommitG2All[participant][0]
+	pkAll[participant] = bglswrapper.GetAllPublicKey(curve, threshold, data.PubCommitG2All)
+	pubCommitG2Zero[participant] = data.PubCommitG2All[participant][0]
 	prvCommit := make([]*big.Int, n)
 	for commitParticipant := 0; commitParticipant < n; commitParticipant++ {
-	  prvCommit[commitParticipant] = data.prvCommitAll[commitParticipant][participant]
+	  prvCommit[commitParticipant] = data.PrvCommitAll[commitParticipant][participant]
 	}
 	skAll[participant] = bglswrapper.GetSecretKey(prvCommit)
   }
@@ -137,7 +158,7 @@ func SignAndVerify(curve CurveSystem, n int, threshold int, data *DataForCommit)
   //Verify the secret key matches the public key
   coefsZero := make([]*big.Int, n)
   for participant := 0; participant < n; participant++ {
-	coefsZero[participant] = data.coefficientsAll[participant][0]
+	coefsZero[participant] = data.CoefficientsAll[participant][0]
   }
   groupSk := bglswrapper.GetPrivateCommitment(curve, big.NewInt(1), coefsZero)
   if groupPk != bgls.LoadPublicKey(curve, groupSk) {
@@ -212,6 +233,7 @@ func SignAndVerify(curve CurveSystem, n int, threshold int, data *DataForCommit)
 //  //return json.Marshal(1)
 //}
 
+
 func main() {
   Init()
   curve := Altbn128
@@ -222,22 +244,37 @@ func main() {
   case "GetCommitDataForAllParticipants":
 	n := toInt(flag.Arg(0))
 	threshold := toInt(flag.Arg(1))
+	dataFile := flag.Arg(2)
 
 	commitData, err := GetCommitDataForAllParticipants(curve, n, threshold)
 	if err != nil {
 	  fmt.Println("Error in GetCommitDataForallParticipants():", err)
 	}
-	json, err := json.Marshal(commitData)
+	//json, err := jsoniter.Marshal(commitData)
+	json, err := marshal(commitData)
 	if err != nil {
 	  fmt.Println("Error marshalling commit data", err)
 	}
-	fmt.Printf("%v", string(json))
+	fmt.Println()
+	os.Stdout.Write(json)
+	err = ioutil.WriteFile(dataFile, json, 0644)
+	if err != nil {
+	  panic(err)
+	}
+	fmt.Println()
 
   case "SignAndVerify":
 	n := toInt(flag.Arg(0))
 	threshold := toInt(flag.Arg(1))
+	dataFile := flag.Arg(2)
+	inBuf, err := ioutil.ReadFile(dataFile)
+	//jsonStr := flag.Arg(2)
 	var data DataForCommit
-	err := json.Unmarshal([]byte(flag.Arg(2)), &data)
+	fmt.Printf("\ninBuf=%v\n\n", string(inBuf))
+	err = json.Unmarshal(inBuf, &data)
+	if err != nil {
+	  panic(err)
+	}
 	isOk, err := SignAndVerify(curve, n, threshold, &data)
 	if err != nil {
 	  fmt.Println("Error in SignAndVerify():", err)
@@ -329,6 +366,59 @@ func main() {
   }
 
 }
+func marshal(commitData *DataForCommit) ([]byte, error) {
+
+  n := len(commitData.CoefficientsAll)
+  jsonData := new(JsonDataForCommit)
+  jsonData.CoefficientsAll = make([][]string, n)
+  jsonData.PubCommitG1All = make([][][]string, n)
+  jsonData.PubCommitG2All = make([][][]string, n)
+  jsonData.PrvCommitAll = make([][]string, n)
+
+
+  for i:=0; i<len(commitData.CoefficientsAll); i++	{
+	jsonData.CoefficientsAll[i] = make([]string, len(commitData.CoefficientsAll[i]))
+    for j:=0; j<len(commitData.CoefficientsAll[i]); j++ {
+	  jsonData.CoefficientsAll[i][j] = commitData.CoefficientsAll[i][j].String()
+	}
+  }
+
+
+
+  for i:=0; i<len(commitData.PubCommitG1All); i++	{
+	jsonData.PubCommitG1All[i] = make([][]string, len(commitData.PubCommitG1All[i]))
+	for j:=0; j<len(commitData.PubCommitG1All[i]); j++ {
+	  coords := commitData.PubCommitG1All[i][j].ToAffineCoords()
+	  coordsStr := make([]string, len(coords))
+	  for k:=0; k<len(coords); k++ {
+	    coordsStr[k] = coords[k].String()
+	  }
+	  jsonData.PubCommitG1All[i][j] = coordsStr
+	}
+  }
+  for i:=0; i<len(commitData.PubCommitG2All); i++	{
+	jsonData.PubCommitG2All[i] = make([][]string, len(commitData.PubCommitG2All[i]))
+    for j:=0; j<len(commitData.PubCommitG2All[i]); j++ {
+	  coords := commitData.PubCommitG2All[i][j].ToAffineCoords()
+	  coordsStr := make([]string, len(coords))
+	  for k:=0; k<len(coords); k++ {
+		coordsStr[k] = coords[k].String()
+	  }
+	  jsonData.PubCommitG2All[i][j] = coordsStr
+	}
+  }
+  for i:=0; i<len(commitData.PrvCommitAll); i++	{
+	jsonData.PrvCommitAll[i] = make([]string, len(commitData.PrvCommitAll[i]))
+	for j:=0; j<len(commitData.PrvCommitAll[i]); j++ {
+	  jsonData.PrvCommitAll[i][j] = commitData.PrvCommitAll[i][j].String()
+	}
+  }
+
+  return json.MarshalIndent(jsonData, "", "  ")
+
+}
+
+
 func toPoint(strings []string) Point {
   panic("Not implemented")
 }
@@ -379,5 +469,7 @@ func Init() {
 
   flag.StringVar(&cmd, "func", "", "Name of function")
   flag.Parse()
+
+  fmt.Println("-- BGLSMAIN.GO -- ")
 
 }

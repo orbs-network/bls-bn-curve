@@ -8,6 +8,7 @@ import (
   . "github.com/Project-Arda/bgls/curves"
   "github.com/stretchr/testify/assert"
   "github.com/Project-Arda/bgls/bgls"
+  "fmt"
 )
 
 var threshold = 2
@@ -15,7 +16,7 @@ var n = 5
 
 func TestDKGHappyFlow(t *testing.T) {
   //for _, curve := range curves {
-
+  fmt.Println("Test start")
   curve := Altbn128
 
   // == Commit phase ==
@@ -124,6 +125,8 @@ func TestDKGHappyFlow(t *testing.T) {
   assert.True(t, bgls.VerifySingleSignature(curve, groupSig2, groupPk, d),
 	"group signature invalid")
   assert.True(t, groupSig1.Equals(groupSig2), "group signatures are not equal")
+
+  fmt.Println("Test end")
   //}
 }
 

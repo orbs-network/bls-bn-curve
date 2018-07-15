@@ -1,5 +1,3 @@
-import * as bgls from "../src/bglswrapper";
-
 const chai = require('chai');
 const dirtyChai = require('dirty-chai');
 const BigNumber = require('bignumber.js');
@@ -56,22 +54,31 @@ const CLIENTS = [{
     address: '0x501106e7c52dBe89A8a67378A17586649E053C25',
     privateKey: '4fd18d7b4d391ffede4d2f7691de47252be47bda95f10bcfe7ee399d181a8723',
   }
-]
+];
 
 
-const DKG = artifacts.require('../contracts/dkg.sol');
+const DKGG2 = artifacts.require('../contracts/dkgG2.sol');
 let dkgContract;
+let allCommitData;
 
 contract('DKG POC', (accounts) => {
-  it('should call DKG methods', async () => {
-    dkgContract = await DKG.new(THRESHOLD, CLIENT_COUNT, DEPOSIT_WEI);
+  it('should send transaction to DKG contract method join()', async () => {
+    dkgContract = await DKGG2.new(THRESHOLD, CLIENT_COUNT, DEPOSIT_WEI);
     console.log(`Deployed DKG contract on address ${dkgContract.address}, txHash: ${dkgContract.transactionHash}`);
-
     await joinAllClients();
-    const allData = await bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT);
-    await commitAllClients(allData);
+  });
+  it('should use BGLS to calculate coefficients, G1, G2, prv data for commit()', async () => {
+    allCommitData = bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT);
+    console.log(`Commit Data: ${allCommitData}`);
+  });
+  it('should send transaction to DKG contract method commit()', async () => {
+    await commitAllClients(allCommitData);
+  });
+  it('should send transaction to DKG contract method closeContract()', async () => {
     await closeContract();
-    await signAndVerify(allData);
+  });
+  it('should use BGLS to sign and verify a sample message', async () => {
+    bgls.SignAndVerify(allCommitData);
   });
 });
 
@@ -82,7 +89,8 @@ async function join(client, i) {
     value: DEPOSIT_WEI,
     gasLimit: 3000000,
   });
-  console.log(`Client #${i} ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
+  console.log(`Client #${i} ${client.address} joined successfully.`);
+  // console.log(`Client #${i} ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
   client.id = null;
   for (let i = 0; i < res.logs.length; i++) {
     var log = res.logs[i];
@@ -114,13 +122,14 @@ async function joinAllClients() {
 
 /// Commit
 
-async function commitAllClients(allData) {
+async function commitAllClients(allDataBuf) {
   console.log(` =====> commit <=====`);
   const promises = [];
 
+  const allData = JSON.parse(allDataBuf.toString());
+  console.log("commitAllClients(): allData=", JSON.stringify(allData));
 
-
-  const { coefsAll, commitG1All, commitG2All, commitPrvAll } = allData;
+  const {coefsAll, commitG1All, commitG2All, commitPrvAll} = allData;
 
   CLIENTS.forEach((client, i) => {
     console.log(`Calling commit() with client #${i} ${client.address}`);
@@ -173,29 +182,6 @@ function closeContract() {
 
 }
 
-function signAndVerify(allData) {
-
-  bgls.SignAndVerify(allData);
-
-
-// TODO: Call Go code that does all this:
-// TODO: Find how Go can retain prvCommit, pubG1, pubG2 from previous run (maybe persist in file)
-
-// Calculate SK (GetSecretKey - returns bigint) - run this for each client
-// PKs (GetAllPublicKey - return []Point, one Point for each client) 
-// and group PK (GetGroupPublicKey - returns Point)
-
-// Sign and reconstruct
-// Call Sign(sk, msg) returns Point (the sig)
-// Take sigs of clients [0,1,2] and [2,3,4] and call SigReconstruct(sigs, signerIndices (client.id from join()))
-// REMEMBER: Indexes in Solidity start from 1, not 0.
-// Returns the sig (Point) of the group
-// SHOW THAT BOTH SIGS ARE THE SAME AND WE ARE DONE!
-
-
-
-  return true;
-}
 
 /*
 function getCommitInputs() {
