@@ -167,6 +167,7 @@ contract dkgG2 {
   // Note that this function does not verifies the committed data, it
   // should be done outside of this contract scope. In case of an
   // invalid committed data use complaints.
+
   function commit(uint16 senderIndex, uint256[] pubCommitG1,
     uint256[] pubCommitG2, uint256[] prCommit)
   inPhase(Phase.Commit)
@@ -187,6 +188,7 @@ contract dkgG2 {
       emit PhaseChange(Phase.PostCommit);
     }
   }
+
   // Assigns the commitments to the sender with index of senderIndex.
   function assignCommitments(uint16 senderIndex, uint256[] pubCommitG1,
     uint256[] pubCommitG2, uint256[] prCommit)

@@ -21,7 +21,8 @@ import (
 var cmd string
 
 const POINT_ELEMENTS = 4
-const BIGINT_BASE = 10
+const BIGINT_BASE = 16
+const INTERNAL_DATA_FILE = "internal.json"
 
 type DataForCommit struct {
   CoefficientsAll [][]*big.Int
@@ -56,17 +57,15 @@ func getPrCommit() {
 
 }
 
-func GetCommitDataForAllParticipants(curve CurveSystem, n int, threshold int) (*DataForCommit, error) {
+func GetCommitDataForAllParticipants(curve CurveSystem, threshold int, n int) (*DataForCommit, error) {
 
-  fmt.Printf("GetCommitDataForAllParticipants() called with n=%v threshold=%v\n", n, threshold)
-
+  fmt.Printf("GetCommitDataForAllParticipants() called with threshold=%v n=%v\n", n, threshold)
 
   allData := new(DataForCommit)
   allData.CoefficientsAll = make([][]*big.Int, n)
   allData.PubCommitG1All = make([][]Point, n)
   allData.PubCommitG2All = make([][]Point, n)
   allData.PrvCommitAll = make([][]*big.Int, n)
-
 
   //coefsAll := make([][]*big.Int, n)
   //commitG1All := make([][]Point, n)
@@ -103,7 +102,7 @@ func GetCommitDataForAllParticipants(curve CurveSystem, n int, threshold int) (*
   return allData, nil
 }
 
-func SignAndVerify(curve CurveSystem, n int, threshold int, data *DataForCommit) (bool, error) {
+func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit) (bool, error) {
   // == Verify phase ==
 
   //coefsAll := data.CoefficientsAll
@@ -233,7 +232,6 @@ func SignAndVerify(curve CurveSystem, n int, threshold int, data *DataForCommit)
 //  //return json.Marshal(1)
 //}
 
-
 func main() {
   Init()
   curve := Altbn128
@@ -242,11 +240,11 @@ func main() {
   switch cmd {
 
   case "GetCommitDataForAllParticipants":
-	n := toInt(flag.Arg(0))
-	threshold := toInt(flag.Arg(1))
-	dataFile := flag.Arg(2)
+	threshold := toInt(flag.Arg(0))
+	n := toInt(flag.Arg(1))
+	exportDataFile := flag.Arg(2)
 
-	commitData, err := GetCommitDataForAllParticipants(curve, n, threshold)
+	commitData, err := GetCommitDataForAllParticipants(curve, threshold, n)
 	if err != nil {
 	  fmt.Println("Error in GetCommitDataForallParticipants():", err)
 	}
@@ -257,25 +255,38 @@ func main() {
 	}
 	fmt.Println()
 	os.Stdout.Write(json)
-	err = ioutil.WriteFile(dataFile, json, 0644)
+	err = ioutil.WriteFile(exportDataFile, json, 0644)
 	if err != nil {
 	  panic(err)
 	}
+	//err = writeGob("./data.gob", commitData)
+	if err != nil {
+	  panic(err)
+	}
+
 	fmt.Println()
 
   case "SignAndVerify":
-	n := toInt(flag.Arg(0))
-	threshold := toInt(flag.Arg(1))
+	threshold := toInt(flag.Arg(0))
+	n := toInt(flag.Arg(1))
 	dataFile := flag.Arg(2)
-	inBuf, err := ioutil.ReadFile(dataFile)
-	//jsonStr := flag.Arg(2)
-	var data DataForCommit
-	fmt.Printf("\ninBuf=%v\n\n", string(inBuf))
-	err = json.Unmarshal(inBuf, &data)
+	var inBuf []byte
+	var err error
+	inBuf, err = ioutil.ReadFile(dataFile)
+	var data = new(DataForCommit)
+	//err = readGob("./data.gob", data)
 	if err != nil {
 	  panic(err)
 	}
-	isOk, err := SignAndVerify(curve, n, threshold, &data)
+
+	//inBuf2 := []byte(strings.Replace(string(inBuf), "\"", "", -1)) // remove all double-quotes
+	//fmt.Printf("\ninBuf=%v\n\n", string(inBuf2))
+	data, err = unmarshal(curve, inBuf)
+	//err = json.Unmarshal(inBuf2, &data)
+	//if err != nil {
+	//  panic(err)
+	//}
+	isOk, err := SignAndVerify(curve, threshold, n, data)
 	if err != nil {
 	  fmt.Println("Error in SignAndVerify():", err)
 	  return
@@ -366,6 +377,73 @@ func main() {
   }
 
 }
+func unmarshal(curve CurveSystem, bytes []byte) (*DataForCommit, error) {
+
+  fmt.Println("Start unmarshal")
+  jsonData := new(JsonDataForCommit)
+  if err := json.Unmarshal(bytes, jsonData); err != nil {
+	return nil, err
+  }
+  n := len(jsonData.CoefficientsAll)
+  commitData := new(DataForCommit)
+  commitData.CoefficientsAll = make([][]*big.Int, n)
+  commitData.PubCommitG1All = make([][]Point, n)
+  commitData.PubCommitG2All = make([][]Point, n)
+  commitData.PrvCommitAll = make([][]*big.Int, n)
+
+  for i := 0; i < len(jsonData.CoefficientsAll); i++ {
+	commitData.CoefficientsAll[i] = make([]*big.Int, len(jsonData.CoefficientsAll[i]))
+	for j := 0; j < len(jsonData.CoefficientsAll[i]); j++ {
+	  commitData.CoefficientsAll[i][j] = toBigInt(jsonData.CoefficientsAll[i][j])
+	}
+  }
+
+  for i := 0; i < len(jsonData.PubCommitG1All); i++ {
+	commitData.PubCommitG1All[i] = make([]Point, len(jsonData.PubCommitG1All[i]))
+	for j := 0; j < len(jsonData.PubCommitG1All[i]); j++ {
+
+	  coords := make([]*big.Int, len(jsonData.PubCommitG1All[i][j]))
+	  for k := 0; k < len(jsonData.PubCommitG1All[i][j]); k++ {
+		coords[k] = toBigInt(jsonData.PubCommitG1All[i][j][k])
+	  }
+	  var isOk bool
+	  commitData.PubCommitG1All[i][j], isOk = curve.MakeG1Point(coords, true)
+	  if !isOk {
+		panic(fmt.Errorf("Failed to make G1 point"))
+	  }
+	}
+  }
+
+  for i := 0; i < len(jsonData.PubCommitG2All); i++ {
+	commitData.PubCommitG2All[i] = make([]Point, len(jsonData.PubCommitG2All[i]))
+	for j := 0; j < len(jsonData.PubCommitG2All[i]); j++ {
+
+	  coords := make([]*big.Int, len(jsonData.PubCommitG2All[i][j]))
+	  for k := 0; k < len(jsonData.PubCommitG2All[i][j]); k++ {
+		coords[k] = toBigInt(jsonData.PubCommitG2All[i][j][k])
+	  }
+	  var isOk bool
+	  commitData.PubCommitG2All[i][j], isOk = curve.MakeG2Point(coords, true)
+	  if !isOk {
+		panic(fmt.Errorf("Failed to make G2 point"))
+		fmt.Println("G2 Point: ", commitData.PubCommitG2All[i][j])
+	  }
+	}
+  }
+
+  for i := 0; i < len(jsonData.PrvCommitAll); i++ {
+	commitData.PrvCommitAll[i] = make([]*big.Int, len(jsonData.PrvCommitAll[i]))
+	for j := 0; j < len(jsonData.PrvCommitAll[i]); j++ {
+	  commitData.PrvCommitAll[i][j] = toBigInt(jsonData.PrvCommitAll[i][j])
+	}
+  }
+
+  fmt.Println("End unmarshal")
+
+  return commitData, nil
+
+}
+
 func marshal(commitData *DataForCommit) ([]byte, error) {
 
   n := len(commitData.CoefficientsAll)
@@ -375,49 +453,50 @@ func marshal(commitData *DataForCommit) ([]byte, error) {
   jsonData.PubCommitG2All = make([][][]string, n)
   jsonData.PrvCommitAll = make([][]string, n)
 
-
-  for i:=0; i<len(commitData.CoefficientsAll); i++	{
+  for i := 0; i < len(commitData.CoefficientsAll); i++ {
 	jsonData.CoefficientsAll[i] = make([]string, len(commitData.CoefficientsAll[i]))
-    for j:=0; j<len(commitData.CoefficientsAll[i]); j++ {
-	  jsonData.CoefficientsAll[i][j] = commitData.CoefficientsAll[i][j].String()
+	for j := 0; j < len(commitData.CoefficientsAll[i]); j++ {
+	  jsonData.CoefficientsAll[i][j] = toHexBigInt(commitData.CoefficientsAll[i][j])
 	}
   }
 
-  for i:=0; i<len(commitData.PubCommitG1All); i++	{
+  for i := 0; i < len(commitData.PubCommitG1All); i++ {
 	jsonData.PubCommitG1All[i] = make([][]string, len(commitData.PubCommitG1All[i]))
-	for j:=0; j<len(commitData.PubCommitG1All[i]); j++ {
+	for j := 0; j < len(commitData.PubCommitG1All[i]); j++ {
 	  coords := commitData.PubCommitG1All[i][j].ToAffineCoords()
 	  coordsStr := make([]string, len(coords))
-	  for k:=0; k<len(coords); k++ {
-	    coordsStr[k] = coords[k].String()
+	  for k := 0; k < len(coords); k++ {
+		coordsStr[k] = toHexBigInt(coords[k])
 	  }
 	  jsonData.PubCommitG1All[i][j] = coordsStr
 	}
   }
 
-  for i:=0; i<len(commitData.PubCommitG2All); i++	{
+  for i := 0; i < len(commitData.PubCommitG2All); i++ {
 	jsonData.PubCommitG2All[i] = make([][]string, len(commitData.PubCommitG2All[i]))
-    for j:=0; j<len(commitData.PubCommitG2All[i]); j++ {
+	for j := 0; j < len(commitData.PubCommitG2All[i]); j++ {
 	  coords := commitData.PubCommitG2All[i][j].ToAffineCoords()
 	  coordsStr := make([]string, len(coords))
-	  for k:=0; k<len(coords); k++ {
-		coordsStr[k] = coords[k].String()
+	  for k := 0; k < len(coords); k++ {
+		coordsStr[k] = toHexBigInt(coords[k])
 	  }
 	  jsonData.PubCommitG2All[i][j] = coordsStr
 	}
   }
 
-  for i:=0; i<len(commitData.PrvCommitAll); i++	{
+  for i := 0; i < len(commitData.PrvCommitAll); i++ {
 	jsonData.PrvCommitAll[i] = make([]string, len(commitData.PrvCommitAll[i]))
-	for j:=0; j<len(commitData.PrvCommitAll[i]); j++ {
-	  jsonData.PrvCommitAll[i][j] = commitData.PrvCommitAll[i][j].String()
+	for j := 0; j < len(commitData.PrvCommitAll[i]); j++ {
+	  jsonData.PrvCommitAll[i][j] = toHexBigInt(commitData.PrvCommitAll[i][j])
 	}
   }
 
   return json.MarshalIndent(jsonData, "", "  ")
 
 }
-
+func toHexBigInt(n *big.Int) string {
+  return fmt.Sprintf("0x%x", n) // or %X or upper case
+}
 
 func toPoint(strings []string) Point {
   panic("Not implemented")

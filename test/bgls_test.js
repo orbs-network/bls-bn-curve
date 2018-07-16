@@ -4,6 +4,7 @@ const BigNumber = require('bignumber.js');
 const bgls = require('../src/bglswrapper.js');
 const Web3 = require('web3');
 const web3 = new Web3();
+const _ = require('lodash');
 
 
 // import expectRevert from './helpers/expectRevert';
@@ -71,7 +72,9 @@ contract('DKG POC', (accounts) => {
     await joinAllClients();
   });
   it('should use BGLS to calculate coefficients, G1, G2, prv data for commit()', async () => {
-    allCommitDataJson = bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT);
+    const outputPath = bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT);
+    allCommitDataJson = require(outputPath);
+    console.log('Read contents of file ', outputPath);
     // console.log(`Commit Data: ${JSON.stringify(allCommitDataJson)}`);
   });
   it('should send transaction to DKG contract method commit()', async () => {
@@ -81,7 +84,7 @@ contract('DKG POC', (accounts) => {
     await closeContract();
   });
   it('should use BGLS to sign and verify a sample message', async () => {
-    bgls.SignAndVerify(allCommitDataJson);
+    bgls.SignAndVerify(THRESHOLD, CLIENT_COUNT);
   });
 });
 
@@ -160,13 +163,19 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
   // TODO: each "e" below is a pair or a quad, not a single string, so toBiGNumber() on it fails.
   // Instead, convert each "e" to and array of big numbers and then flatMap commitG1 so the resulting array will be x0,y0,x1,y1,... coords
   // FIXME: what is e?????????? it doesn't work.
-  const commitG1BigInts = commitG1.map(e => e.split(",").map(numstr => web3.toBigNumber(numstr)));
-  const commitG2BigInts = commitG2.map(e => e.split(",").map(numstr => web3.toBigNumber(numstr)));
-  const prvBigInts = commitPrv.map(e => e.split(",").map(numstr => web3.toBigNumber(numstr)));
+  const commitG1BigInts = commitG1.map(e => e.map(numstr => { const biggie = web3.toBigNumber(numstr); /*console.log(`numstr: ${numstr} biggie: ${biggie}`); */return biggie;}));
+  const commitG2BigInts = commitG2.map(e => e.map(numstr => web3.toBigNumber(numstr)));
+  const prvBigInts = commitPrv.map(numstr => web3.toBigNumber(numstr));
 
-  console.log(`Commit(): client.id=${client.id} commitG1BigInts(${typeof commitG1BigInts})=${commitG1BigInts.toString()} commitG2BigInts=${JSON.stringify(cocommitG2BigIntsmmitG2)} commitPrvBigInts=${JSON.stringify(prvBigInts)}`);
-  console.log(`Commit(): calling with client.id=${client.id}`);
-  const result = await dkgContract.commit.call(client.id, commitG1BigInts, commitG2BigInts, prvBigInts, {
+  console.log(`===> Commit(ID=${client.id}) <===`);
+  console.log(`commitG1BigInts: ${JSON.stringify(commitG1BigInts)}`);
+  console.log(`commitG2BigInts: ${JSON.stringify(commitG2BigInts)}`);
+  console.log(`commitPrvBigInts=${JSON.stringify(prvBigInts)}`);
+  const g1Flat = _.flatMap(commitG1BigInts);
+  const g2Flat = _.flatMap(commitG2BigInts);
+  console.log(`g1Flat: ${JSON.stringify(g1Flat)}`);
+  console.log(`g2Flat: ${JSON.stringify(g2Flat)}`);
+  const result = await dkgContract.commit.call(client.id, g1Flat, g2Flat, prvBigInts, {
     from: client.address,
     gasLimit: 3000000
   });
