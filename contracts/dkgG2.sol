@@ -80,7 +80,7 @@ contract dkgG2 {
   uint16 public curN; // current num of participants
 
   uint256 public phaseStart;
-  uint256 public constant commitTimeout = 100;
+  uint256 public constant commitTimeout = 10;
   // mapping from node's index to a participant
   mapping (uint16 => Participant) public participants;
   constructor(uint16 threshold, uint16 numParticipants, uint deposit) public

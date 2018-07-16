@@ -2,8 +2,6 @@ const chai = require('chai');
 const dirtyChai = require('dirty-chai');
 const BigNumber = require('bignumber.js');
 const bgls = require('../src/bglswrapper.js');
-const Web3 = require('web3');
-const web3 = new Web3();
 const _ = require('lodash');
 
 
@@ -33,6 +31,11 @@ chai.use(dirtyChai);
 
 const ETH_URL = "http://127.0.0.1:7545";
 // const CONTRACT_ADDRESS = '0xF7d58983Dbe1c84E03a789A8A2274118CC29b5da';
+const Web3 = require('web3');
+
+// See https://github.com/ethereum/web3.js/issues/1119
+Web3.providers.HttpProvider.prototype.sendAsync = Web3.providers.HttpProvider.prototype.send;
+const web3 = new Web3(new Web3.providers.HttpProvider(ETH_URL));
 
 const CLIENT_COUNT = 5;
 const THRESHOLD = 2;
@@ -83,11 +86,13 @@ contract('DKG POC', (accounts) => {
     await commitAllClients(allCommitDataJson);
   });
 
-  it.skip('should send transaction to DKG contract method closeContract()', async () => {
-    await closeContract();
+  it('should send transaction to DKG contract method closeContract()', async () => {
+    console.log('Block number before: ', web3.eth.blockNumber);
+    await closeContract(CLIENTS[0]);
+    console.log('Block number after: ', web3.eth.blockNumber);
   });
 
-  it('should use BGLS to sign and verify a sample message', async () => {
+  it.skip('should use BGLS to sign and verify a sample message', async () => {
     bgls.SignAndVerify(THRESHOLD, CLIENT_COUNT);
   });
 });
@@ -218,15 +223,40 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
 }
 
 
-function closeContract() {
+async function closeContract(client) {
 
 // TODO Client 0 to call dkgContract.phaseChange() and verify it runs. Don't send deposit.
 // TODO return how much gas was spent for all calls for each client
 // Separate to execution cost (function of opcodes) and transaction cost (execution cost + fixed cost per tx)
 
+  await mineNBlocks(11);
+  const res = await dkgContract.phaseChange({
+    from: client.address,
+    gasLimit: 3000000
+  });
+
+
+  console.log(`phaseChange(): finished successfully. Result: ${JSON.stringify(res)}`);
+
 
 }
 
+const mineOneBlock = async () => {
+  console.log(JSON.stringify(web3.eth));
+
+  await web3.currentProvider.send({
+    jsonrpc: '2.0',
+    method: 'evm_mine',
+    params: [],
+    id: 200,
+  });
+};
+
+const mineNBlocks = async n => {
+  for (let i = 0; i < n; i++) {
+    await mineOneBlock()
+  }
+};
 
 /*
 function getCommitInputs() {
