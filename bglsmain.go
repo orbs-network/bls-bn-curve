@@ -102,13 +102,10 @@ func GetCommitDataForAllParticipants(curve CurveSystem, threshold int, n int) (*
   return allData, nil
 }
 
-func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit) (bool, error) {
-  // == Verify phase ==
+// This is for the Complaint flow only - don't call it for now
+func VerifyPrivateCommitment(curve CurveSystem, threshold int, n int, data *DataForCommit) (bool, error) {
 
-  //coefsAll := data.CoefficientsAll
-  //commitG1All := data.PubCommitG1All
-  //commitG2All := data.PubCommitG2All
-  //commitPrvAll := data.PrvCommitAll
+  // == Verify phase ==
 
   j := big.NewInt(1)
   for participant := 0; participant < n; participant++ {
@@ -122,7 +119,15 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 	j.Add(j, big.NewInt(1))
   }
 
+  return true, nil
+
+}
+
+func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit) (bool, error) {
+
   // == Calculate SK, Pks and group PK ==
+  // TODO Should be happen only once, after DKG flow is done, and not for every SignAndVerify()
+
   skAll := make([]*big.Int, n)
   pkAll := make([][]Point, n)
   pubCommitG2Zero := make([]Point, n)
@@ -136,42 +141,47 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 	skAll[participant] = bglswrapper.GetSecretKey(prvCommit)
   }
 
-  pkOk := true
+  //pkOk := true
 
-  //Verify pkAll are the same for all
-  for participant := 0; participant < n; participant++ {
-	pks := pkAll[participant]
-	for otherParticipant := 0; otherParticipant < n; otherParticipant++ {
-	  if pks[participant] != pkAll[otherParticipant][participant] {
-		pkOk = false
-		fmt.Println("pk for the same participant is different among other participants")
-	  }
-	}
-  }
-
-  if !pkOk {
-	return false, fmt.Errorf("failed PK verification")
-  }
-
+  ////Verify pkAll are the same for all
+  //for participant := 0; participant < n; participant++ {
+  //pks := pkAll[participant]
+  //for otherParticipant := 0; otherParticipant < n; otherParticipant++ {
+  //  if pks[participant] != pkAll[otherParticipant][participant] {
+  //	pkOk = false
+  //	fmt.Println("pk for the same participant is different among other participants")
+  //  }
+  //}
+  //}
+  //
+  //if !pkOk {
+  //return false, fmt.Errorf("failed PK verification")
+  //}
+  //
   groupPk := bglswrapper.GetGroupPublicKey(curve, pubCommitG2Zero)
   //Verify the secret key matches the public key
-  coefsZero := make([]*big.Int, n)
-  for participant := 0; participant < n; participant++ {
-	coefsZero[participant] = data.CoefficientsAll[participant][0]
-  }
-  groupSk := bglswrapper.GetPrivateCommitment(curve, big.NewInt(1), coefsZero)
-  if groupPk != bgls.LoadPublicKey(curve, groupSk) {
-	return false, fmt.Errorf("groupPK doesnt match to groupSK")
-  }
+
+  //coefsZero := make([]*big.Int, n)
+  //for participant := 0; participant < n; participant++ {
+  //coefsZero[participant] = data.CoefficientsAll[participant][0]
+  //}
+
+  //groupSk := bglswrapper.GetPrivateCommitment(curve, big.NewInt(1), coefsZero)
+  //if groupPk != bgls.LoadPublicKey(curve, groupSk) {
+  //return false, fmt.Errorf("groupPK doesnt match to groupSK")
+  //}
 
   // == Sign and reconstruct ==
+
   d := make([]byte, 64)
   var err error
   _, err = rand.Read(d)
   //assert.Nil(t, err, "msg data generation failed")
   sigs := make([]Point, n)
   for participant := 0; participant < n; participant++ {
+
 	sigs[participant] = bgls.Sign(curve, skAll[participant], d)
+
 	if !bgls.VerifySingleSignature(curve, sigs[participant], pkAll[0][participant], d) {
 	  return false, fmt.Errorf("signature invalid")
 	}
@@ -253,7 +263,6 @@ func main() {
 	if err != nil {
 	  fmt.Println("Error marshalling commit data", err)
 	}
-	fmt.Println()
 	os.Stdout.Write(json)
 	err = ioutil.WriteFile(exportDataFile, json, 0644)
 	if err != nil {
@@ -263,8 +272,6 @@ func main() {
 	if err != nil {
 	  panic(err)
 	}
-
-	fmt.Println()
 
   case "SignAndVerify":
 	threshold := toInt(flag.Arg(0))
@@ -282,6 +289,7 @@ func main() {
 	//inBuf2 := []byte(strings.Replace(string(inBuf), "\"", "", -1)) // remove all double-quotes
 	//fmt.Printf("\ninBuf=%v\n\n", string(inBuf2))
 	data, err = unmarshal(curve, inBuf)
+
 	//err = json.Unmarshal(inBuf2, &data)
 	//if err != nil {
 	//  panic(err)
@@ -291,7 +299,7 @@ func main() {
 	  fmt.Println("Error in SignAndVerify():", err)
 	  return
 	}
-	fmt.Printf("%v", isOk)
+	fmt.Printf("SignAndVerify() ok? %v", isOk)
 
 	/*
 	  case "GetDataForCommit":
@@ -379,7 +387,7 @@ func main() {
 }
 func unmarshal(curve CurveSystem, bytes []byte) (*DataForCommit, error) {
 
-  fmt.Println("Start unmarshal")
+  //fmt.Println("Start unmarshal")
   jsonData := new(JsonDataForCommit)
   if err := json.Unmarshal(bytes, jsonData); err != nil {
 	return nil, err
@@ -438,8 +446,7 @@ func unmarshal(curve CurveSystem, bytes []byte) (*DataForCommit, error) {
 	}
   }
 
-  fmt.Println("End unmarshal")
-
+  //fmt.Println("End unmarshal")
   return commitData, nil
 
 }
@@ -520,7 +527,10 @@ func toBigInts(strings []string) []*big.Int {
 
 func toBigInt(s string) *big.Int {
   bigInt := new(big.Int)
-  bigInt.SetString(s, BIGINT_BASE)
+  bigInt, ok := bigInt.SetString(s, 0)
+  if !ok {
+	panic(fmt.Errorf("toBigInt() failed on string %v", s))
+  }
   return bigInt
 }
 

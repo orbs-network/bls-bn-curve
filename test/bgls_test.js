@@ -32,7 +32,7 @@ const {
 chai.use(dirtyChai);
 
 const ETH_URL = "http://127.0.0.1:7545";
-const CONTRACT_ADDRESS = '0xF7d58983Dbe1c84E03a789A8A2274118CC29b5da';
+// const CONTRACT_ADDRESS = '0xF7d58983Dbe1c84E03a789A8A2274118CC29b5da';
 
 const CLIENT_COUNT = 5;
 const THRESHOLD = 2;
@@ -71,18 +71,22 @@ contract('DKG POC', (accounts) => {
     console.log(`Deployed DKG contract on address ${dkgContract.address}, txHash: ${dkgContract.transactionHash}`);
     await joinAllClients();
   });
+
   it('should use BGLS to calculate coefficients, G1, G2, prv data for commit()', async () => {
     const outputPath = bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT);
     allCommitDataJson = require(outputPath);
     console.log('Read contents of file ', outputPath);
     // console.log(`Commit Data: ${JSON.stringify(allCommitDataJson)}`);
   });
+
   it('should send transaction to DKG contract method commit()', async () => {
     await commitAllClients(allCommitDataJson);
   });
-  it('should send transaction to DKG contract method closeContract()', async () => {
+
+  it.skip('should send transaction to DKG contract method closeContract()', async () => {
     await closeContract();
   });
+
   it('should use BGLS to sign and verify a sample message', async () => {
     bgls.SignAndVerify(THRESHOLD, CLIENT_COUNT);
   });
@@ -95,11 +99,11 @@ async function join(client, i) {
     value: DEPOSIT_WEI,
     gasLimit: 3000000,
   });
-  console.log(`Client #${i} ${client.address} joined successfully.`);
-  // console.log(`Client #${i} ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
+  // console.log(`Client #${i} ${client.address} joined successfully.`);
+  console.log(`Client #${i} ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
   client.id = null;
-  for (let i = 0; i < res.logs.length; i++) {
-    var log = res.logs[i];
+  for (let j = 0; j < res.logs.length; j++) {
+    var log = res.logs[j];
 
     if (log.event === "ParticipantJoined") {
       client.id = log.args.index;
@@ -110,20 +114,33 @@ async function join(client, i) {
   if (client.id === null) {
     throw new Error(`Client #${i} did not receive an ID from join(), cannot continue`);
   }
+  console.log("-----------------");
   return res;
 }
 
 async function joinAllClients() {
   console.log('=====> join <=====');
   const promises = [];
-  CLIENTS.forEach((client, i) => {
-    promises.push(join(client, i));
-  });
-  promises.push(() => {
-    setTimeout(1000);
-  });
-  const res = await Promise.all(promises);
-  return res;
+
+
+  //
+  //
+  // CLIENTS.reduce((prev, current) => {
+  //   prev.then
+  // }, Promise.resolve());
+
+  let i=0;
+  for (const client of CLIENTS) {
+    console.log("Calling ", i);
+    await join(client, i);
+    i++;
+  }
+
+  // CLIENTS.forEach((client, i) => {
+  //   promises.push(join(client, i));
+  // });
+  // const res = await Promise.all(promises);
+  // return res;
 }
 
 /// Commit
@@ -175,17 +192,29 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
   const g2Flat = _.flatMap(commitG2BigInts);
   console.log(`g1Flat: ${JSON.stringify(g1Flat)}`);
   console.log(`g2Flat: ${JSON.stringify(g2Flat)}`);
-  const result = await dkgContract.commit.call(client.id, g1Flat, g2Flat, prvBigInts, {
+  const res = await dkgContract.commit(client.id, g1Flat, g2Flat, prvBigInts, {
     from: client.address,
     gasLimit: 3000000
   });
 
-  // TODO: Add listener to NewCommit() event
   // Each client saves the pubCommitG1 and pubCommitG2 of ALL clients (save under its sender index),
   // prCommit[] is an array of bigints (f(i))(2) for all client indexes, but generated with the current client's coeffs.
 
+  for (let j = 0; j < res.logs.length; j++) {
+    var log = res.logs[j];
 
-  console.log(`Commit(): Client #${i} ${client.address} committed successfully. Result: ${JSON.stringify(result)}`);
+    if (log.event === "NewCommit") {
+      console.log(`Client ID #${client.id} received NewCommit: ${JSON.stringify(log)}`);
+      // client.id = log.args.index;
+      // console.log(`Client #${i} received ID [${client.id}] from join()`);
+      break;
+    }
+  }
+
+
+
+
+  console.log(`Commit(): Client ID #${client.id} ${client.address} committed successfully. Result: ${JSON.stringify(res)}`);
 }
 
 
