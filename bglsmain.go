@@ -210,49 +210,63 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 	indices[participant] = big.NewInt(0).Set(index)
   }
 
-  subGroups := [][]int{
+  subIndices := [][]int{
 	{1, 2, 3},
 	{3, 4, 5},
 	{2, 4, 5},
 	{1, 3, 5},
   }
 
-  for i := 0; i < len(subGroups); i++ {
-	_, err := verifySigOnSubset(curve, indices, sigs, groupPk, msgBytes, subGroups[i])
+  for i := 0; i < len(subIndices); i++ {
+	_, err := verifySigOnSubset(curve, indices, sigs, groupPk, msgBytes, subIndices[i])
 	if err != nil {
-	  fmt.Printf("Error in subgroup %v: %v", subGroups[i], err)
+	  fmt.Printf("Error in subgroup %v: %v", subIndices[i], err)
 	  return false, err
 	}
-	fmt.Printf("verifySigOnSubset(): completed successfully for subgroup %v\n", subGroups[i])
+	fmt.Printf("Verify signature completed successfully for subgroup %v\n", subIndices[i])
+	fmt.Println("======================================================")
   }
 
   return true, nil
 }
 
-func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, groupPk Point, msgBytes []byte, subGroup []int) (bool, error) {
+func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, groupPk Point, msgBytes []byte, subIndices []int) (bool, error) {
 
-  fmt.Printf("Verifying signature on subset of clients with indices %v\n", subGroup)
+  subSigs := make([]Point, len(subIndices))
+  subIndicesBigInt := make([]*big.Int, len(subIndices))
 
-  subSigs := make([]Point, len(subGroup))
-  subIndices := make([]*big.Int, len(subGroup))
-
-  for i, _ := range subGroup {
-	subSigs[i] = sigs[i]
-	subIndices[i] = indices[i]
+  for i, idx := range subIndices {
+	subSigs[i] = sigs[idx-1]
+	subIndicesBigInt[i] = big.NewInt(int64(idx))
+	//subIndices[i] = indices[idx]
   }
 
-  fmt.Printf("Sending to SignatureReconstruction(): subIndices=%v\n", subIndices)
+  fmt.Printf("Sending to SignatureReconstruction(): indices=%v\n", subIndices)
+  for i, subSig := range subSigs {
+	fmt.Printf("Signature Share %v: %v\n", indices[i], pointToHexCoords(subSig))
+  }
   groupSig1, err := bglswrapper.SignatureReconstruction(
-	curve, subSigs, subIndices)
+	curve, subSigs, subIndicesBigInt)
   if err != nil {
-	return false, fmt.Errorf("group signature reconstruction fail")
+	return false, fmt.Errorf("group signature reconstruction failed")
   }
+  fmt.Printf("Group signature: %v\n", pointToHexCoords(groupSig1))
   if !bgls.VerifySingleSignature(curve, groupSig1, groupPk, msgBytes) {
 	return false, fmt.Errorf("group signature invalid")
   }
-  fmt.Printf("Group signature: %v\n", groupSig1)
+
 
   return true, nil
+}
+
+func pointToHexCoords(p Point) string	{
+
+  coords := p.ToAffineCoords()
+  res := make([]string, len(coords))
+  for i, coord := range coords {
+    res[i] = toHexBigInt(coord)
+  }
+  return fmt.Sprintf("%v", res)
 }
 
 // Returns pubCommitG1 (array of 2d points), pubCommitG2 (array of 4d points) and prvCommit (array of bigints)
