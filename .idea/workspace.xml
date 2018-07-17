@@ -6,7 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="a09d8812-db46-4c8c-934a-2686e83d6a83" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contracts/dkgG2.sol" beforeDir="false" afterPath="$PROJECT_DIR$/contracts/dkgG2.sol" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/test.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/test.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/bglswrapper.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/bglswrapper.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/bgls_test.js" beforeDir="false" afterPath="$PROJECT_DIR$/test/bgls_test.js" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -21,17 +24,8 @@
       <file leaf-file-name="bglsmain.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bglsmain.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="349">
-              <caret line="531" column="12" selection-start-line="531" selection-start-column="12" selection-end-line="531" selection-end-column="12" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="dkgG2.sol" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/contracts/dkgG2.sol">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="339">
-              <caret line="334" selection-start-line="334" selection-end-line="334" />
+            <state relative-caret-position="17">
+              <caret line="170" column="43" selection-start-line="170" selection-start-column="43" selection-end-line="170" selection-end-column="43" />
             </state>
           </provider>
         </entry>
@@ -39,54 +33,40 @@
       <file leaf-file-name="bgls_test.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test/bgls_test.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="496">
-              <caret line="90" column="34" selection-start-line="90" selection-start-column="34" selection-end-line="90" selection-end-column="34" />
+            <state relative-caret-position="531">
+              <caret line="74" column="22" selection-start-line="74" selection-start-column="22" selection-end-line="74" selection-end-column="22" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="package.json" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/package.json">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="204">
-              <caret line="12" column="36" selection-start-line="12" selection-start-column="36" selection-end-line="12" selection-end-column="36" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="dkg-client-test.js_" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/test/dkg-client-test.js_">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="714">
-              <caret line="42" column="64" selection-start-line="42" selection-end-line="42" selection-end-column="64" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="test.json" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/test.json">
+      <file leaf-file-name="truffle-config.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/truffle-config.js">
           <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
-      <file leaf-file-name="common.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/scripts/common.sh">
-          <provider selected="true" editor-type-id="text-editor" />
+      <file leaf-file-name="bglswrapper.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="255">
+              <caret line="15" column="36" selection-start-line="15" selection-start-column="36" selection-end-line="15" selection-end-column="36" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="dkgG2.sol" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/contracts/dkgG2.sol">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="356">
+              <caret line="125" column="11" selection-start-line="125" selection-start-column="11" selection-end-line="125" selection-end-column="11" />
+            </state>
+          </provider>
         </entry>
       </file>
       <file leaf-file-name="test.sh" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scripts/test.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="374">
-              <caret line="22" column="57" selection-start-line="22" selection-start-column="57" selection-end-line="22" selection-end-column="57" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="bglswrapper.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2907">
-              <caret line="171" selection-start-line="171" selection-end-line="171" />
+            <state relative-caret-position="544">
+              <caret line="32" column="3" selection-start-line="32" selection-start-column="3" selection-end-line="32" selection-end-column="3" />
             </state>
           </provider>
         </entry>
@@ -102,19 +82,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>F7d58983Dbe1c84E03a789A8A2274118CC29b5da</find>
-      <find>deploy</find>
-      <find>0x3a3b442f28c4295106a503b11fafe65531a2af819d1c0ffdf89b130a4212c457</find>
-      <find>getcommit</find>
-      <find>join wi</find>
-      <find>succ</find>
-      <find>join(</find>
-      <find>commit(</find>
-      <find>skip</find>
-      <find>toaffine</find>
-      <find>signaturere</find>
-      <find>():</find>
-      <find>sig</find>
       <find>unmarshalled</find>
       <find>start un</find>
       <find>recon</find>
@@ -132,7 +99,23 @@
       <find>.client</find>
       <find>client</find>
       <find>phasech</find>
+      <find>gas</find>
+      <find>commit</find>
+      <find>commit(</find>
+      <find>one</find>
+      <find>complain</find>
+      <find>console.lo</find>
+      <find>expect</find>
+      <find>bignumber</find>
+      <find>console.log</find>
+      <find>constru</find>
+      <find>get</find>
+      <find>dkgcon</find>
+      <find>address</find>
     </findStrings>
+    <replaceStrings>
+      <replace>logger.info</replace>
+    </replaceStrings>
   </component>
   <component name="GOROOT" path="/usr/local/Cellar/go/1.10.3/libexec" />
   <component name="Git.Settings">
@@ -164,10 +147,11 @@
         <option value="$PROJECT_DIR$/bglswrapper/bglsmain.go" />
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/bglswrapper/bglswrapper_test.go" />
-        <option value="$PROJECT_DIR$/src/bglswrapper.js" />
         <option value="$PROJECT_DIR$/bglswrapper/bglswrapper.go" />
         <option value="$PROJECT_DIR$/bglsmain.go" />
         <option value="$PROJECT_DIR$/contracts/dkgG2.sol" />
+        <option value="$PROJECT_DIR$/src/bglswrapper.js" />
+        <option value="$PROJECT_DIR$/scripts/test.sh" />
         <option value="$PROJECT_DIR$/test/bgls_test.js" />
       </list>
     </option>
@@ -197,8 +181,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
-      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -224,71 +206,19 @@
             <path>
               <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
               <item name="bls-bn-curve" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
+              <item name="bls-bn-curve" type="462c0819:PsiDirectoryNode" />
               <item name="test" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="Project-Arda" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="Project-Arda" type="462c0819:PsiDirectoryNode" />
-              <item name="bgls" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="Project-Arda" type="462c0819:PsiDirectoryNode" />
-              <item name="bgls" type="462c0819:PsiDirectoryNode" />
-              <item name="bgls" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="bls-bn-curve" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="GOPATH &lt;bls-bn-curve&gt;" type="20ee2d1f:SyntheticLibraryElementNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="Project-Arda" type="462c0819:PsiDirectoryNode" />
-              <item name="bgls" type="462c0819:PsiDirectoryNode" />
-              <item name="curves" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
+      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -305,15 +235,15 @@
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/bglswrapper" />
       <recent name="$PROJECT_DIR$/dkgwrapper/dkg" />
       <recent name="$PROJECT_DIR$/bgls" />
       <recent name="$PROJECT_DIR$/dkg-client" />
-    </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -367,15 +297,14 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-3440" y="-861" width="1720" height="1417" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info id="Designer" order="3" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.20023838" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2181168" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="right" id="Cargo" order="4" />
       <window_info anchor="right" id="Palette&#9;" order="4" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
-      <window_info anchor="bottom" id="Version Control" order="7" visible="true" weight="0.19583654" />
+      <window_info active="true" anchor="bottom" id="Version Control" order="7" visible="true" weight="0.19583654" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.5568182" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
@@ -408,7 +337,8 @@
     <MESSAGE value="not working" />
     <MESSAGE value="Serialization between JS and Go now seems to work" />
     <MESSAGE value="Full flow is stable (incomplete, though)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Full flow is stable (incomplete, though)" />
+    <MESSAGE value="Added close contract" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added close contract" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -624,9 +554,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/truffle-config.js">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/scripts/ganache.log">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -640,20 +567,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="5780">
           <caret line="340" column="14" selection-start-line="340" selection-start-column="14" selection-end-line="340" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="3" column="49" selection-start-line="3" selection-start-column="49" selection-end-line="3" selection-end-column="49" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/commit_data.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="13" column="62" selection-start-line="13" selection-start-column="62" selection-end-line="13" selection-end-column="62" />
         </state>
       </provider>
     </entry>
@@ -709,16 +622,6 @@
     <entry file="file://$PROJECT_DIR$/test.json">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/common.sh">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/test.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="22" column="57" selection-start-line="22" selection-start-column="57" selection-end-line="22" selection-end-column="57" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/test/dkg-client-test.js_">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="714">
@@ -740,24 +643,51 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bglsmain.go">
+    <entry file="file://$PROJECT_DIR$/commit_data.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="349">
-          <caret line="531" column="12" selection-start-line="531" selection-start-column="12" selection-end-line="531" selection-end-column="12" />
+        <state relative-caret-position="3502">
+          <caret line="206" column="42" selection-start-line="206" selection-start-column="42" selection-end-line="206" selection-end-column="42" />
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/common.sh">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="15" column="36" selection-start-line="15" selection-start-column="36" selection-end-line="15" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/test.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="544">
+          <caret line="32" column="3" selection-start-line="32" selection-start-column="3" selection-end-line="32" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/truffle-config.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
     <entry file="file://$PROJECT_DIR$/contracts/dkgG2.sol">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="339">
-          <caret line="334" selection-start-line="334" selection-end-line="334" />
+        <state relative-caret-position="356">
+          <caret line="125" column="11" selection-start-line="125" selection-start-column="11" selection-end-line="125" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bglsmain.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="170" column="43" selection-start-line="170" selection-start-column="43" selection-end-line="170" selection-end-column="43" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/test/bgls_test.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="496">
-          <caret line="90" column="34" selection-start-line="90" selection-start-column="34" selection-end-line="90" selection-end-column="34" />
+        <state relative-caret-position="531">
+          <caret line="74" column="22" selection-start-line="74" selection-start-column="22" selection-end-line="74" selection-end-column="22" />
         </state>
       </provider>
     </entry>

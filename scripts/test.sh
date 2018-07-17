@@ -13,7 +13,7 @@ fi
 trap cleanup EXIT
 
 if ganache_running $port; then
-  echo "Using existing ganache instance"
+  echo "Using existing ganache instance on port $port"
 else
   echo "Starting our own ganache instance"
 
@@ -30,5 +30,6 @@ fi
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   SOLIDITY_COVERAGE=true ./node_modules/.bin/solidity-coverage
 else
+  #echo "Running test $@"
   ./node_modules/.bin/truffle test "$@"
 fi

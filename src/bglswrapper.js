@@ -2,14 +2,36 @@ const {execSync} = require('child_process');
 const CWD = __dirname;
 const EXEC_PATH = `${CWD}/../bls-bn-curve`;
 const OUTPUT_PATH = `${CWD}/../commit_data.json`;
+const readlineSync = require('readline-sync');
+const { createLogger, format, transports } = require('winston');
+
+const INTERACTIVE = true;
+const SHOW_DEBUG = true;
+
+const logger = createLogger({
+  format: format.json(),
+  transports: [
+    new transports.Console(({
+      format: format.simple(),
+      level: SHOW_DEBUG ? 'debug' : 'info'
+    }))
+    // new winston.transports.File({ filename: 'combined.log' })
+  ]
+});
+
+function pause()  {
+  if(INTERACTIVE) {
+    readlineSync.keyInPause();
+  }
+}
 
 function GetCommitDataForAllParticipants(threshold, clientCount) {
   const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipants ${threshold} ${clientCount} ${OUTPUT_PATH}`;
 
-  console.log(`Calling external command ${cmd}`);
+  logger.info(`Calling external command ${cmd}`);
   execSync(cmd, {cwd: CWD});
   const json = require(OUTPUT_PATH);
-  console.log("Read data from file:", JSON.stringify(json));
+  logger.debug("Read data from file:", JSON.stringify(json));
   return OUTPUT_PATH;
 }
 
@@ -32,14 +54,16 @@ function GetCommitDataForAllParticipants(threshold, clientCount) {
 function SignAndVerify(threshold, clientCount) {
   // const json = require(OUTPUT_PATH);
   const cmd = `${EXEC_PATH} -func=SignAndVerify ${threshold} ${clientCount} ${OUTPUT_PATH}`;
-  console.log(`Calling external command ${cmd}`);
+  logger.info(`Calling external command ${cmd}`);
   const stdoutBuffer = execSync(cmd, {cwd: CWD});
-  console.log(stdoutBuffer.toString());
+  logger.debug(stdoutBuffer.toString());
   return stdoutBuffer;
 }
 
 
 module.exports = {
   GetCommitDataForAllParticipants: GetCommitDataForAllParticipants,
-  SignAndVerify: SignAndVerify
+  SignAndVerify: SignAndVerify,
+  logger: logger,
+  pause: pause
 };

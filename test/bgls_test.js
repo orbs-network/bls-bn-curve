@@ -1,11 +1,9 @@
 const chai = require('chai');
 const dirtyChai = require('dirty-chai');
-const BigNumber = require('bignumber.js');
 const bgls = require('../src/bglswrapper.js');
+const logger = bgls.logger;
 const _ = require('lodash');
-
-
-// import expectRevert from './helpers/expectRevert';
+const pause = bgls.pause;
 
 // Run tests:  scripts/test.sh
 
@@ -24,9 +22,6 @@ const _ = require('lodash');
 // Listen to event after commit to know when we are done.
 
 
-const {
-  expect
-} = chai;
 chai.use(dirtyChai);
 
 const ETH_URL = "http://127.0.0.1:7545";
@@ -39,7 +34,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider(ETH_URL));
 
 const CLIENT_COUNT = 5;
 const THRESHOLD = 2;
-const DEPOSIT_WEI = 1000000000000000000; // 1e18
+const DEPOSIT_WEI = 25000000000000000000; // 1e18 * 25
 
 const CLIENTS = [{
   address: '0x6E0C57E9B3a8BfDe94e89105b78A7f8bc40e85A0',
@@ -68,63 +63,78 @@ const DKGG2 = artifacts.require('../contracts/dkgG2.sol');
 let dkgContract;
 let allCommitDataJson;
 
-contract('DKG POC', (accounts) => {
-  it('should send transaction to DKG contract method join()', async () => {
+logger.info('===> Start <===');
+
+contract('dkgG2', (accounts) => {
+  it('===> Deploy DKG contract', async () => {
     dkgContract = await DKGG2.new(THRESHOLD, CLIENT_COUNT, DEPOSIT_WEI);
-    console.log(`Deployed DKG contract on address ${dkgContract.address}, txHash: ${dkgContract.transactionHash}`);
+
+    // TODO Use deployed() here?
+    logger.info(`Deployed DKG contract on address ${dkgContract.address}, txHash: ${dkgContract.transactionHash}`);
+    logger.info(`Contract properties: threshold=${THRESHOLD} numParticipants=${CLIENT_COUNT} depositWei=${DEPOSIT_WEI}`);
+    accounts.forEach((a, i) => logger.info(`Account ${i}: ${accounts[i]}`));
+    await printValuesFromContract();
+
+
+
+    pause();
+
+  });
+  it.skip('===> Clients call join() on contract', async () => {
     await joinAllClients();
   });
 
-  it('should use BGLS to calculate coefficients, G1, G2, prv data for commit()', async () => {
+  it.skip('===> Generate data before calling commit()', async () => {
     const outputPath = bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT);
     allCommitDataJson = require(outputPath);
-    console.log('Read contents of file ', outputPath);
-    // console.log(`Commit Data: ${JSON.stringify(allCommitDataJson)}`);
+    logger.debug('Read contents of file ', outputPath);
+    // logger.info(`Commit Data: ${JSON.stringify(allCommitDataJson)}`);
   });
 
-  it('should send transaction to DKG contract method commit()', async () => {
+  it.skip('===> Clients call commit() on contract', async () => {
     await commitAllClients(allCommitDataJson);
   });
 
-  it('should send transaction to DKG contract method closeContract()', async () => {
-    console.log('Block number before: ', web3.eth.blockNumber);
-    await closeContract(CLIENTS[0]);
-    console.log('Block number after: ', web3.eth.blockNumber);
+  it.skip('===> Phase change after all clients have called commit()', async () => {
+    logger.info('Block number before phaseChange: ', web3.eth.blockNumber);
+
+    await phaseChange(CLIENTS[0]);
+    logger.info('Block number after phaseChange: ', web3.eth.blockNumber);
   });
 
-  it.skip('should use BGLS to sign and verify a sample message', async () => {
+  it.skip('===> Sign and verify a message', async () => {
     bgls.SignAndVerify(THRESHOLD, CLIENT_COUNT);
   });
 });
 
 async function join(client, i) {
-  console.log(`Calling join() with client #${i} ${client.address}`);
+  logger.info(`Calling join() with client #${i} ${client.address}`);
   const res = await dkgContract.join({
     from: client.address,
     value: DEPOSIT_WEI,
     gasLimit: 3000000,
   });
-  // console.log(`Client #${i} ${client.address} joined successfully.`);
-  console.log(`Client #${i} ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
+  // logger.info(`Client #${i} ${client.address} joined successfully.`);
+  logger.info(`Client #${i} ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
   client.id = null;
   for (let j = 0; j < res.logs.length; j++) {
-    var log = res.logs[j];
+    const log = res.logs[j];
 
     if (log.event === "ParticipantJoined") {
       client.id = log.args.index;
-      console.log(`Client #${i} received ID [${client.id}] from join()`);
+      logger.info(`Client #${i} received ID [${client.id}] from join()`);
       break;
     }
   }
   if (client.id === null) {
     throw new Error(`Client #${i} did not receive an ID from join(), cannot continue`);
   }
-  console.log("-----------------");
+  logger.info("-----------------");
   return res;
 }
 
 async function joinAllClients() {
-  console.log('=====> join <=====');
+  logger.info('=====> join <=====');
   const promises = [];
 
 
@@ -136,7 +146,7 @@ async function joinAllClients() {
 
   let i=0;
   for (const client of CLIENTS) {
-    console.log("Calling ", i);
+    logger.info("Calling ", i);
     await join(client, i);
     i++;
   }
@@ -151,12 +161,12 @@ async function joinAllClients() {
 /// Commit
 
 async function commitAllClients(json) {
-  console.log(` =====> commit <=====`);
+  logger.info(` =====> commit <=====`);
   const promises = [];
-  // console.log("commitAllClients(): allData=", JSON.stringify(json));
+  // logger.info("commitAllClients(): allData=", JSON.stringify(json));
   const {CoefficientsAll, PubCommitG1All, PubCommitG2All, PrvCommitAll} = json;
   CLIENTS.forEach((client, i) => {
-    console.log(`Calling commit() with client #${i} ${client.address}`);
+    logger.info(`Calling commit() with client #${i} ${client.address}`);
     promises.push(commit(client, i, CoefficientsAll[i], PubCommitG1All[i], PubCommitG2All[i], PrvCommitAll[i]));
   });
   promises.push(() => {
@@ -185,18 +195,18 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
   // TODO: each "e" below is a pair or a quad, not a single string, so toBiGNumber() on it fails.
   // Instead, convert each "e" to and array of big numbers and then flatMap commitG1 so the resulting array will be x0,y0,x1,y1,... coords
   // FIXME: what is e?????????? it doesn't work.
-  const commitG1BigInts = commitG1.map(e => e.map(numstr => { const biggie = web3.toBigNumber(numstr); /*console.log(`numstr: ${numstr} biggie: ${biggie}`); */return biggie;}));
+  const commitG1BigInts = commitG1.map(e => e.map(numstr => { const biggie = web3.toBigNumber(numstr); /*logger.info(`numstr: ${numstr} biggie: ${biggie}`); */return biggie;}));
   const commitG2BigInts = commitG2.map(e => e.map(numstr => web3.toBigNumber(numstr)));
   const prvBigInts = commitPrv.map(numstr => web3.toBigNumber(numstr));
 
-  console.log(`===> Commit(ID=${client.id}) <===`);
-  console.log(`commitG1BigInts: ${JSON.stringify(commitG1BigInts)}`);
-  console.log(`commitG2BigInts: ${JSON.stringify(commitG2BigInts)}`);
-  console.log(`commitPrvBigInts=${JSON.stringify(prvBigInts)}`);
+  logger.info(`===> Commit(ID=${client.id}) <===`);
+  logger.info(`commitG1BigInts: ${JSON.stringify(commitG1BigInts)}`);
+  logger.info(`commitG2BigInts: ${JSON.stringify(commitG2BigInts)}`);
+  logger.info(`commitPrvBigInts=${JSON.stringify(prvBigInts)}`);
   const g1Flat = _.flatMap(commitG1BigInts);
   const g2Flat = _.flatMap(commitG2BigInts);
-  console.log(`g1Flat: ${JSON.stringify(g1Flat)}`);
-  console.log(`g2Flat: ${JSON.stringify(g2Flat)}`);
+  logger.info(`g1Flat: ${JSON.stringify(g1Flat)}`);
+  logger.info(`g2Flat: ${JSON.stringify(g2Flat)}`);
   const res = await dkgContract.commit(client.id, g1Flat, g2Flat, prvBigInts, {
     from: client.address,
     gasLimit: 3000000
@@ -209,9 +219,9 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
     var log = res.logs[j];
 
     if (log.event === "NewCommit") {
-      console.log(`Client ID #${client.id} received NewCommit: ${JSON.stringify(log)}`);
+      logger.info(`Client ID #${client.id} received NewCommit: ${JSON.stringify(log)}`);
       // client.id = log.args.index;
-      // console.log(`Client #${i} received ID [${client.id}] from join()`);
+      // logger.info(`Client #${i} received ID [${client.id}] from join()`);
       break;
     }
   }
@@ -219,11 +229,11 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
 
 
 
-  console.log(`Commit(): Client ID #${client.id} ${client.address} committed successfully. Result: ${JSON.stringify(res)}`);
+  logger.info(`Commit(): Client ID #${client.id} ${client.address} committed successfully. Result: ${JSON.stringify(res)}`);
 }
 
 
-async function closeContract(client) {
+async function phaseChange(client) {
 
 // TODO Client 0 to call dkgContract.phaseChange() and verify it runs. Don't send deposit.
 // TODO return how much gas was spent for all calls for each client
@@ -236,13 +246,13 @@ async function closeContract(client) {
   });
 
 
-  console.log(`phaseChange(): finished successfully. Result: ${JSON.stringify(res)}`);
+  logger.info(`phaseChange(): finished successfully. Result: ${JSON.stringify(res)}`);
 
 
 }
 
 const mineOneBlock = async () => {
-  console.log(JSON.stringify(web3.eth));
+  logger.info(JSON.stringify(web3.eth));
 
   await web3.currentProvider.send({
     jsonrpc: '2.0',
@@ -258,11 +268,29 @@ const mineNBlocks = async n => {
   }
 };
 
+async function printValuesFromContract() {
+  const valuesFromContract = {};
+  logger.debug("Get n");
+  valuesFromContract.n = await dkgContract.n();
+  logger.debug("Get t");
+  valuesFromContract.t = await dkgContract.t();
+  logger.debug("Get p");
+  valuesFromContract.p = await dkgContract.p();
+  logger.debug("Get q");
+  valuesFromContract.q = await dkgContract.q();
+  // logger.debug("Get g1");
+  // valuesFromContract.g1 = await dkgContract.g1();
+  // logger.debug("Get g2");
+  // valuesFromContract.g2 = await dkgContract.g2();
+  logger.info(`Reading values directly from contract: ${JSON.stringify(valuesFromContract)}`);
+
+}
+
 /*
 function getCommitInputs() {
   const cmd = `${CWD}/dkgmain -func=GetCommitInputs`;
   const stdoutBuffer = execSync(cmd, {cwd: CWD});
-  console.log(stdoutBuffer.toString());
+  logger.info(stdoutBuffer.toString());
 
 }
 
