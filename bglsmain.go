@@ -9,10 +9,10 @@ import (
   "strings"
   "encoding/json"
   "github.com/orbs-network/bls-bn-curve/bglswrapper"
-  "math/rand"
   "github.com/Project-Arda/bgls/bgls"
   "os"
   "io/ioutil"
+  "bufio"
 )
 
 // Usage examples:
@@ -23,6 +23,8 @@ var cmd string
 const POINT_ELEMENTS = 4
 const BIGINT_BASE = 16
 const INTERNAL_DATA_FILE = "internal.json"
+const INTERACTIVE = false
+
 
 type DataForCommit struct {
   CoefficientsAll [][]*big.Int
@@ -128,6 +130,10 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   // == Calculate SK, Pks and group PK ==
   // TODO Should be happen only once, after DKG flow is done, and not for every SignAndVerify()
 
+  fmt.Printf("Starting SignAndVerify with threshold=%v n=%v", threshold, n)
+
+  fmt.Println("Calculate SK, PK and Commitments - this is done just once, before signing & verifying messages.")
+
   skAll := make([]*big.Int, n)
   pkAll := make([][]Point, n)
   pubCommitG2Zero := make([]Point, n)
@@ -159,6 +165,9 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   //}
   //
   groupPk := bglswrapper.GetGroupPublicKey(curve, pubCommitG2Zero)
+
+  fmt.Printf("Group PK: %v\n", groupPk)
+
   //Verify the secret key matches the public key
 
   //coefsZero := make([]*big.Int, n)
@@ -173,20 +182,27 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 
   // == Sign and reconstruct ==
 
-  d := make([]byte, 64)
-  var err error
-  _, err = rand.Read(d)
+  //d := make([]byte, 64)
+  var msg string
+  if INTERACTIVE {
+	msg = readFromStdin()
+  } else {
+	msg = "Hello Orbs"
+  }
+  msgBytes := []byte(msg)
+  //_, err = rand.Read(d)
   //assert.Nil(t, err, "msg data generation failed")
   sigs := make([]Point, n)
+
+  // For each participant, generate signature with its SK
   for participant := 0; participant < n; participant++ {
-
-	sigs[participant] = bgls.Sign(curve, skAll[participant], d)
-
-	if !bgls.VerifySingleSignature(curve, sigs[participant], pkAll[0][participant], d) {
+	sigs[participant] = bgls.Sign(curve, skAll[participant], msgBytes)
+	if !bgls.VerifySingleSignature(curve, sigs[participant], pkAll[0][participant], msgBytes) {
 	  return false, fmt.Errorf("signature invalid")
 	}
   }
 
+  // Generates indices [0..n)
   indices := make([]*big.Int, n)
   index := big.NewInt(0)
   for participant := 0; participant < n; participant++ {
@@ -194,27 +210,48 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 	indices[participant] = big.NewInt(0).Set(index)
   }
 
-  groupSig1, err := bglswrapper.SignatureReconstruction(
-	curve, sigs[:threshold+1], indices[:threshold+1])
-  if err != nil {
-	return false, fmt.Errorf("group signature reconstruction fail")
-  }
-  if !bgls.VerifySingleSignature(curve, groupSig1, groupPk, d) {
-	return false, fmt.Errorf("group signature invalid")
+  subGroups := [][]int{
+	{0, 1, 2},
+	{2, 3, 4},
+	{1, 3, 4},
+	{0, 2, 4},
   }
 
-  groupSig2, err := bglswrapper.SignatureReconstruction(
-	curve, sigs[n-(threshold+1):], indices[n-(threshold+1):])
-
-  if err != nil {
-	return false, fmt.Errorf("group signature reconstruction fail")
-  }
-  if !bgls.VerifySingleSignature(curve, groupSig2, groupPk, d) {
-	return false, fmt.Errorf("group signatures are not equal")
+  for i := 0; i < len(subGroups); i++ {
+	_, err := verifySigOnSubset(curve, indices, sigs, groupPk, msgBytes, subGroups[i])
+	if err != nil {
+	  fmt.Printf("Error in subgroup %v: %v", subGroups[i], err)
+	  return false, err
+	}
+	fmt.Printf("verifySigOnSubset(): completed successfully for subgroup %v\n", subGroups[i])
   }
 
   return true, nil
+}
 
+func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, groupPk Point, msgBytes []byte, subGroup []int) (bool, error) {
+
+  fmt.Printf("Verifying signature on subset of clients with indices %v\n", subGroup)
+
+  subSigs := make([]Point, len(subGroup))
+  subIndices := make([]*big.Int, len(subGroup))
+
+  for i, idx := range subGroup {
+	subSigs[i] = sigs[idx]
+	subIndices[i] = indices[idx]
+  }
+
+  groupSig1, err := bglswrapper.SignatureReconstruction(
+	curve, subSigs, subIndices)
+  if err != nil {
+	return false, fmt.Errorf("group signature reconstruction fail")
+  }
+  if !bgls.VerifySingleSignature(curve, groupSig1, groupPk, msgBytes) {
+	return false, fmt.Errorf("group signature invalid")
+  }
+  fmt.Println("Group signature: ", groupSig1)
+
+  return true, nil
 }
 
 // Returns pubCommitG1 (array of 2d points), pubCommitG2 (array of 4d points) and prvCommit (array of bigints)
@@ -250,6 +287,7 @@ func main() {
   switch cmd {
 
   case "GetCommitDataForAllParticipants":
+	fmt.Println("--- GetCommitDataForAllParticipants ---")
 	threshold := toInt(flag.Arg(0))
 	n := toInt(flag.Arg(1))
 	exportDataFile := flag.Arg(2)
@@ -258,7 +296,6 @@ func main() {
 	if err != nil {
 	  fmt.Println("Error in GetCommitDataForallParticipants():", err)
 	}
-	//json, err := jsoniter.Marshal(commitData)
 	json, err := marshal(commitData)
 	if err != nil {
 	  fmt.Println("Error marshalling commit data", err)
@@ -274,6 +311,7 @@ func main() {
 	}
 
   case "SignAndVerify":
+	fmt.Println("--- SignAndVerify ---")
 	threshold := toInt(flag.Arg(0))
 	n := toInt(flag.Arg(1))
 	dataFile := flag.Arg(2)
@@ -561,4 +599,11 @@ func Init() {
 
   fmt.Println("-- BGLSMAIN.GO -- ")
 
+}
+
+func readFromStdin() (string) {
+  reader := bufio.NewReader(os.Stdin)
+  fmt.Print("Enter text: ")
+  text, _ := reader.ReadString('\n')
+  return text
 }

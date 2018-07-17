@@ -24,6 +24,7 @@
         "ref-array": "^1.2.0",
         "ref-struct": "^1.1.0",
         "truffle": "4.1.12",
+        "web3": "0.20.6",
         "winston": "^3.0.0",
         "zeppelin-solidity": "1.10.0"
     },

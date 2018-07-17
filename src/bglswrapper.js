@@ -29,9 +29,10 @@ function GetCommitDataForAllParticipants(threshold, clientCount) {
   const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipants ${threshold} ${clientCount} ${OUTPUT_PATH}`;
 
   logger.info(`Calling external command ${cmd}`);
+  pause();
   execSync(cmd, {cwd: CWD});
   const json = require(OUTPUT_PATH);
-  logger.debug("Read data from file:", JSON.stringify(json));
+  logger.debug(`GetCommitDataForAllParticipants(): Read data from file: ${JSON.stringify(json)}`);
   return OUTPUT_PATH;
 }
 
