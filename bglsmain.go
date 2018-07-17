@@ -130,9 +130,9 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   // == Calculate SK, Pks and group PK ==
   // TODO Should be happen only once, after DKG flow is done, and not for every SignAndVerify()
 
-  fmt.Printf("Starting SignAndVerify with threshold=%v n=%v", threshold, n)
+  fmt.Printf("Starting SignAndVerify with threshold=%v n=%v\n", threshold, n)
 
-  fmt.Println("Calculate SK, PK and Commitments - this is done just once, before signing & verifying messages.")
+  fmt.Println("Calculating SK, PK and Commitments - this is done just once, before signing & verifying messages.\n")
 
   skAll := make([]*big.Int, n)
   pkAll := make([][]Point, n)
@@ -164,9 +164,16 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   //return false, fmt.Errorf("failed PK verification")
   //}
   //
+
+  for i, pkShares := range pkAll {
+    for j, pkShare := range pkShares {
+	  fmt.Printf("PK share [%v][%v]: %v\n", i, j, pointToHexCoords(pkShare))
+	}
+  }
+
   groupPk := bglswrapper.GetGroupPublicKey(curve, pubCommitG2Zero)
 
-  fmt.Printf("Group PK: %v\n", groupPk)
+  fmt.Printf("Group PK: %v\n", pointToHexCoords(groupPk))
 
   //Verify the secret key matches the public key
 
@@ -189,7 +196,11 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   } else {
 	msg = "Hello Orbs"
   }
+
+  fmt.Printf("Message for signature verification: %v\n", msg)
   msgBytes := []byte(msg)
+  fmt.Printf("Message bytes: %x\n", msgBytes);
+
   //_, err = rand.Read(d)
   //assert.Nil(t, err, "msg data generation failed")
   sigs := make([]Point, n)
@@ -197,9 +208,14 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   // For each participant, generate signature with its SK
   for participant := 0; participant < n; participant++ {
 	sigs[participant] = bgls.Sign(curve, skAll[participant], msgBytes)
+
 	if !bgls.VerifySingleSignature(curve, sigs[participant], pkAll[0][participant], msgBytes) {
 	  return false, fmt.Errorf("signature invalid")
 	}
+  }
+
+  for i, sig := range sigs {
+	fmt.Printf("Signature Share %v: %v\n", i+1, pointToHexCoords(sig))
   }
 
   // Generates indices [0..n)
@@ -243,14 +259,14 @@ func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, grou
 
   fmt.Printf("Sending to SignatureReconstruction(): indices=%v\n", subIndices)
   for i, subSig := range subSigs {
-	fmt.Printf("Signature Share %v: %v\n", indices[i], pointToHexCoords(subSig))
+	fmt.Printf("Signature Share %v: %v\n", subIndicesBigInt[i], pointToHexCoords(subSig))
   }
   groupSig1, err := bglswrapper.SignatureReconstruction(
 	curve, subSigs, subIndicesBigInt)
   if err != nil {
 	return false, fmt.Errorf("group signature reconstruction failed")
   }
-  fmt.Printf("Group signature: %v\n", pointToHexCoords(groupSig1))
+  fmt.Printf("* Group signature: %v *\n", pointToHexCoords(groupSig1))
   if !bgls.VerifySingleSignature(curve, groupSig1, groupPk, msgBytes) {
 	return false, fmt.Errorf("group signature invalid")
   }
