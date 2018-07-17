@@ -211,10 +211,10 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   }
 
   subGroups := [][]int{
-	{0, 1, 2},
-	{2, 3, 4},
-	{1, 3, 4},
-	{0, 2, 4},
+	{1, 2, 3},
+	{3, 4, 5},
+	{2, 4, 5},
+	{1, 3, 5},
   }
 
   for i := 0; i < len(subGroups); i++ {
@@ -236,11 +236,12 @@ func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, grou
   subSigs := make([]Point, len(subGroup))
   subIndices := make([]*big.Int, len(subGroup))
 
-  for i, idx := range subGroup {
-	subSigs[i] = sigs[idx]
-	subIndices[i] = indices[idx]
+  for i, _ := range subGroup {
+	subSigs[i] = sigs[i]
+	subIndices[i] = indices[i]
   }
 
+  fmt.Printf("Sending to SignatureReconstruction(): subIndices=%v\n", subIndices)
   groupSig1, err := bglswrapper.SignatureReconstruction(
 	curve, subSigs, subIndices)
   if err != nil {
@@ -249,7 +250,7 @@ func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, grou
   if !bgls.VerifySingleSignature(curve, groupSig1, groupPk, msgBytes) {
 	return false, fmt.Errorf("group signature invalid")
   }
-  fmt.Println("Group signature: ", groupSig1)
+  fmt.Printf("Group signature: %v\n", groupSig1)
 
   return true, nil
 }
@@ -337,7 +338,7 @@ func main() {
 	  fmt.Println("Error in SignAndVerify():", err)
 	  return
 	}
-	fmt.Printf("SignAndVerify() ok? %v", isOk)
+	fmt.Printf("SignAndVerify() ok? %v\n", isOk)
 
 	/*
 	  case "GetDataForCommit":

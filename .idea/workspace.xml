@@ -1,18 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/bglsmain.go" line="266" />
+    <bookmark url="file://$PROJECT_DIR$/bglsmain.go" line="267" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a09d8812-db46-4c8c-934a-2686e83d6a83" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/clients.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/commit_data.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bglsmain.go" beforeDir="false" afterPath="$PROJECT_DIR$/bglsmain.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/bglswrapper.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/bglswrapper.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/bgls_test.js" beforeDir="false" afterPath="$PROJECT_DIR$/test/bgls_test.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/truffle-config.js" beforeDir="false" afterPath="$PROJECT_DIR$/truffle-config.js" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -26,8 +21,8 @@
       <file leaf-file-name="bglsmain.go" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/bglsmain.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="319">
-              <caret line="251" column="45" selection-start-line="251" selection-start-column="45" selection-end-line="251" selection-end-column="45" />
+            <state relative-caret-position="235">
+              <caret line="238" column="10" selection-start-line="238" selection-start-column="10" selection-end-line="238" selection-end-column="10" />
             </state>
           </provider>
         </entry>
@@ -44,7 +39,7 @@
       <file leaf-file-name="bglswrapper.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="238">
+            <state relative-caret-position="2822">
               <caret line="166" selection-start-line="166" selection-end-line="166" />
             </state>
           </provider>
@@ -89,8 +84,8 @@
       <file leaf-file-name="commit_data.json" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/commit_data.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3502">
-              <caret line="206" column="42" selection-start-line="206" selection-start-column="42" selection-end-line="206" selection-end-column="42" />
+            <state relative-caret-position="297">
+              <caret line="207" column="30" selection-start-line="207" selection-start-column="30" selection-end-line="207" selection-end-column="30" />
             </state>
           </provider>
         </entry>
@@ -106,8 +101,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>skip</find>
-      <find>total h</find>
       <find>total</find>
       <find>values for</find>
       <find>j=0</find>
@@ -136,6 +129,8 @@
       <find>rand</find>
       <find>read</find>
       <find>range</find>
+      <find>indices</find>
+      <find>sign</find>
     </findStrings>
     <replaceStrings>
       <replace>logger.info</replace>
@@ -208,6 +203,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="PackagesPane" />
       <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
@@ -320,7 +316,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -402,17 +397,16 @@
     <editor active="true" />
     <layout>
       <window_info id="Designer" order="3" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.19957082" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.20243205" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="right" id="Cargo" order="4" />
       <window_info anchor="right" id="Palette&#9;" order="4" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32575756" />
-      <window_info anchor="bottom" id="Version Control" order="7" weight="0.33553502" />
+      <window_info anchor="bottom" id="Version Control" order="7" visible="true" weight="0.33553502" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.5568182" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.3989432" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.3989432" />
       <window_info anchor="bottom" id="TypeScript" order="7" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -422,6 +416,7 @@
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32575756" />
       <window_info anchor="bottom" id="Terminal" order="7" />
     </layout>
   </component>
@@ -442,7 +437,8 @@
     <MESSAGE value="Full flow is stable (incomplete, though)" />
     <MESSAGE value="Added close contract" />
     <MESSAGE value="Started with pauses" />
-    <option name="LAST_COMMIT_MESSAGE" value="Started with pauses" />
+    <MESSAGE value="Almost working!" />
+    <option name="LAST_COMMIT_MESSAGE" value="Almost working!" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -721,13 +717,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/commit_data.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3502">
-          <caret line="206" column="42" selection-start-line="206" selection-start-column="42" selection-end-line="206" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/node_modules/web3/index.d.ts" />
     <entry file="file://$PROJECT_DIR$/node_modules/web3/types.d.ts" />
     <entry file="file://$PROJECT_DIR$/package-lock.json">
@@ -784,15 +773,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
+        <state relative-caret-position="2822">
           <caret line="166" selection-start-line="166" selection-end-line="166" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/commit_data.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="297">
+          <caret line="207" column="30" selection-start-line="207" selection-start-column="30" selection-end-line="207" selection-end-column="30" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/bglsmain.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="319">
-          <caret line="251" column="45" selection-start-line="251" selection-start-column="45" selection-end-line="251" selection-end-column="45" />
+        <state relative-caret-position="235">
+          <caret line="238" column="10" selection-start-line="238" selection-start-column="10" selection-end-line="238" selection-end-column="10" />
         </state>
       </provider>
     </entry>
