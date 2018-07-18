@@ -6,7 +6,7 @@ const readlineSync = require('readline-sync');
 const { createLogger, format, transports } = require('winston');
 
 const INTERACTIVE = true;
-const SHOW_DEBUG = true;
+const SHOW_DEBUG = false;
 
 const logger = createLogger({
   format: format.json(),

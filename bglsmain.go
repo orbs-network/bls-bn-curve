@@ -23,7 +23,7 @@ var cmd string
 const POINT_ELEMENTS = 4
 const BIGINT_BASE = 16
 const INTERNAL_DATA_FILE = "internal.json"
-const INTERACTIVE = false
+const INTERACTIVE = true
 
 type DataForCommit struct {
   CoefficientsAll [][]*big.Int
@@ -86,12 +86,24 @@ func GetCommitDataForAllParticipants(curve CurveSystem, threshold int, n int) (*
 		return allData, err
 	  }
 	  verifyResult := bglswrapper.VerifyPublicCommitment(curve, commitG1[i], commitG2[i])
-	  fmt.Printf("VerifyPublicCommitment() (p=%v i=%v) passed? %v\n", participant, i, verifyResult)
+	  if !verifyResult {
+	    return nil, fmt.Errorf("VerifyPublicCommitment() failed for (participant=%v i=%v)", participant, i)
+	  }
+	  fmt.Printf("PASSED VerifyPublicCommitment() (p=%v i=%v)\n", participant, i)
 	}
 
 	j := big.NewInt(1)
 	for i := 0; i < n; i++ {
 	  commitPrv[i] = bglswrapper.GetPrivateCommitment(curve, j, coefs)
+
+	  // FIXME WEIRD!!!
+
+	  //prv := commitPrv[i]
+	  //pub := commitG1[i]
+	  //_, err := VerifyPrivateCommitment(curve, j, prv, pub)
+	  //if err != nil {
+	  //  return nil, err
+	  //}
 	  j.Add(j, big.NewInt(1))
 	}
 	allData.CoefficientsAll[participant] = coefs
@@ -217,7 +229,7 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 	if !bgls.VerifySingleSignature(curve, sigs[participant], pkAll[0][participant], msgBytes) {
 	  return false, fmt.Errorf("signature invalid")
 	}
-	fmt.Printf("PASSED VerifySingleSignature() sig share for client #%v: %v\n", participant, pointToHexCoords(sigs[participant]))
+	fmt.Printf("PASSED VerifySingleSignature() sig share for client ID #%v: %v\n", participant+1, pointToHexCoords(sigs[participant]))
   }
 
   // Generates indices [0..n)
@@ -230,10 +242,12 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 
   // These are 1-based (not 0-based)
   subIndices := [][]int{
-	{1, 2, 3},
-	{3, 4, 5},
-	{2, 4, 5},
-	{1, 3, 5},
+	{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	{1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 20, 18, 16, 14},
+	//{3, 4, 5},
+	//{2, 4, 5},
+	//{1, 3, 5},
   }
 
   for i := 0; i < len(subIndices); i++ {
@@ -645,7 +659,8 @@ func Init() {
 
 func readFromStdin() (string) {
   reader := bufio.NewReader(os.Stdin)
-  fmt.Print("Enter text: ")
+  fmt.Println()
+  fmt.Print("*** Enter message: ")
   text, _ := reader.ReadString('\n')
   return text
 }

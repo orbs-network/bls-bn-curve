@@ -32,8 +32,10 @@ const Web3 = require('web3');
 Web3.providers.HttpProvider.prototype.sendAsync = Web3.providers.HttpProvider.prototype.send;
 const web3 = new Web3(new Web3.providers.HttpProvider(ETH_URL));
 
-const CLIENT_COUNT = 5;
-const THRESHOLD = 2;
+const CLIENT_COUNT = 22;
+// const CLIENT_COUNT = 5;
+const THRESHOLD = 14;
+// const THRESHOLD = 2;
 const DEPOSIT_WEI = 25000000000000000000; // 1e18 * 25
 const MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED = 11;
 
@@ -50,22 +52,23 @@ logger.info('===> Start <===');
 // Mocha will throw error if idle for 5 minutes and there is no done() callback.
 
 contract('dkgG2', (accounts) => {
-  it.skip('===> Deploy DKG contract and print properties', async () => {
+  it('===> Deploy DKG contract and print properties', async () => {
+    printAccounts(accounts);
     return await deploy(accounts);
   });
-  it.skip('===> Clients call join() on contract', async () => {
+  it('===> Clients call join() on contract', async () => {
     await joinAllClients();
   });
 
-  it.skip('===> Generate data before calling commit()', () => {
+  it('===> Generate data before calling commit()', () => {
     getCommitData();
   });
 
-  it.skip('===> Clients call commit() on contract', async () => {
+  it('===> Clients call commit() on contract', async () => {
     await commitAllClients(allCommitDataJson);
   });
 
-  it.skip('===> Phase change after all clients have called commit()', async () => {
+  it('===> Phase change after all clients have called commit()', async () => {
     await phaseChange(CLIENTS[0]);
   });
 
@@ -75,14 +78,14 @@ contract('dkgG2', (accounts) => {
 });
 
 async function join(client, i) {
-  logger.info(`Calling join() with client #${i} ${client.address}`);
+  logger.info(`Calling join() with client ${client.address}`);
   const res = await dkgContract.join({
     from: client.address,
     value: DEPOSIT_WEI,
     gasLimit: 3000000,
   });
-  // logger.info(`Client #${i} ${client.address} joined successfully.`);
-  // logger.info(`Client #${i} ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
+  // logger.info(`Client ID #${i} ${client.address} joined successfully.`);
+  // logger.info(`Client ID #${i} ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
   client.id = null;
   for (let j = 0; j < res.logs.length; j++) {
     const log = res.logs[j];
@@ -95,13 +98,14 @@ async function join(client, i) {
     }
   }
   if (client.id === null) {
-    throw new Error(`Client #${i} did not receive an ID from join(), cannot continue`);
+    throw new Error(`Client ID #${i} did not receive an ID from join(), cannot continue`);
   }
-  logger.info(`Client #${i} ${client.address} joined successfully and received ID [${client.id}]`);
-  logger.debug(`Client #${i} ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
-  logger.info(`Client #${i} *** Gas used: ${res.receipt.gasUsed}. *** Block: ${res.receipt.blockNumber}`);
-  logger.info('');
+  logger.info(`Client ${client.address} joined successfully and received ID [${client.id}]. Block: ${res.receipt.blockNumber}`);
+  logger.debug(`Client ${client.address} joined successfully. Result: ${JSON.stringify(res)}`);
+  logger.info(`Client ID #${client.id} of ${CLIENTS.length}: Gas used: ${res.receipt.gasUsed}`);
+  console.log('');
   gasUsed.join += res.receipt.gasUsed;
+  client.gasUsed += res.receipt.gasUsed;
   return res;
 }
 
@@ -109,14 +113,14 @@ async function joinAllClients() {
   logger.info('=====> join <=====');
   let i = 0;
   for (const client of CLIENTS) {
-    logger.debug(`Calling join() with client #${i+1}`);
+    logger.debug(`Calling join() with client ID #${i+1}`);
     pause();
     const res = await join(client, i);
-    // logger.debug(`Result of join() with client #${i+1}: ${JSON.stringify(res)}`);
+    // logger.debug(`Result of join() with client ID #${i+1}: ${JSON.stringify(res)}`);
     i++;
   }
   logger.info(`***** Total gas used for join(): ${gasUsed.join} *****`);
-  logger.info('');
+  console.log('');
   pause();
 }
 
@@ -127,7 +131,6 @@ async function commitAllClients(json) {
   const {CoefficientsAll, PubCommitG1All, PubCommitG2All, PrvCommitAll} = json;
 
   logger.info("Notice the difference in gas costs between join() and commit()");
-  pause();
 
   let i = 0;
   for (const client of CLIENTS) {
@@ -137,7 +140,7 @@ async function commitAllClients(json) {
     i++;
   }
   logger.info(`***** Total gas used for commit(): ${gasUsed.commit} *****`);
-  logger.info('');
+  console.log('');
   pause();
 }
 
@@ -165,7 +168,7 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
   const commitG2BigInts = commitG2.map(e => e.map(numstr => web3.toHex(numstr)));
   const prvBigInts = commitPrv.map(numstr => web3.toHex(numstr));
 
-  logger.info(`===> Commit(ID=${client.id}) <===`);
+  logger.info(`===> Commit(Index=${client.id}) <===`);
   logger.info(`commitG1BigInts: ${JSON.stringify(commitG1BigInts)}`);
   logger.info(`commitG2BigInts: ${JSON.stringify(commitG2BigInts)}`);
   logger.info(`commitPrvBigInts=${JSON.stringify(prvBigInts)}`);
@@ -197,10 +200,11 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
     throw new Error(`Client #${i} ${client.address} - commit() failed!`);
   }
 
-  logger.info(`Client #${i} ${client.address} committed successfully`);
-  logger.info(`Client #${i} *** Gas used: ${res.receipt.gasUsed}. *** Block ${res.receipt.blockNumber}`);
-  logger.info('');
+  logger.info(`Client ID #${client.id} ${client.address} committed successfully`);
+  logger.info(`Client ID #${client.id} of ${CLIENTS.length} *** Gas used: ${res.receipt.gasUsed}. *** Block ${res.receipt.blockNumber}`);
+  console.log('');
   gasUsed.commit += res.receipt.gasUsed;
+  client.gasUsed += res.receipt.gasUsed;
 
   logger.debug(`Commit(): Client ID #${client.id} ${client.address} committed successfully. Result: ${JSON.stringify(res)}`);
 }
@@ -219,8 +223,8 @@ async function deploy(accounts) {
   // TODO Use deployed() here?
   logger.info(`Deployed DKG contract on address ${dkgContract.address}, txHash: ${dkgContract.transactionHash}`);
   logger.info(`Contract properties: threshold=${THRESHOLD} numParticipants=${CLIENT_COUNT} depositWei=${DEPOSIT_WEI}`);
-  accounts.forEach((a, i) => logger.info(`Account ${i}: ${accounts[i]}`));
-  await printValuesFromContract();
+  // accounts.forEach((a, i) => logger.info(`Account ${i}: ${accounts[i]}`));
+  // await printValuesFromContract();
   pause();
 }
 
@@ -254,14 +258,20 @@ async function phaseChange(client) {
   });
 
   logger.info(`phaseChange(): finished successfully. *** Gas used: ${res.receipt.gasUsed}. *** Block: ${res.receipt.blockNumber}`);
-  logger.info('');
+  console.log('');
   gasUsed.phaseChange += res.receipt.gasUsed;
+  client.gasUsed += res.receipt.gasUsed;
   logger.debug(`phaseChange(): finished successfully. Result: ${JSON.stringify(res)}`);
 
   logger.info('Now take note again of accounts balance, now that deposits have been refunded.');
-  logger.info('');
+  console.log('');
   logger.info(`***** Total gas used: ${getTotalGasUsed()} *****`);
-  logger.info('');
+  console.log('');
+
+  for (const client of CLIENTS) {
+    logger.info(`Total gas used by client ${client.id}: ${client.gasUsed}`);
+  }
+  
   pause();
 }
 
@@ -311,27 +321,35 @@ async function printValuesFromContract() {
 
 }
 
+function printAccounts()  {
+  for(const a of CLIENTS)  {
+    logger.info(`Account: ${a.address}`)
+  }
+  logger.info(`Total of ${CLIENTS.length} accounts`);
+}
+
 function printDataPerClient(data) {
 
   // TODO Fix text and contents here
 
   CLIENTS.forEach((client, i) => {
-    logger.info('');
-    logger.info(`===> Data for client #${i+1} ${client.address} <===`);
+    pause();
+    console.log('');
+    logger.info(`===> Data for client ID #${client.id} ${client.address} <===`);
     logger.info(`===================================================`);
     for(let j=0; j<data.CoefficientsAll[i].length; j++) {
-      logger.info(`Client #${i+1}: Coefficient ${j}: ${data.CoefficientsAll[i][j]}`);
+      logger.info(`Client ID #${i+1}: Coefficient ${j}: ${data.CoefficientsAll[i][j]}`);
     }
     for(let j=0; j<data.PubCommitG1All[i].length; j++) {
-      logger.info(`Client #${i+1}: Commitment on G1 for coefficient ${j}: ${data.PubCommitG1All[i][j]}`);
+      logger.info(`Client ID #${i+1}: Commitment on G1 for coefficient ${j}: ${data.PubCommitG1All[i][j]}`);
     }
 
     for(let j=0; j<data.PubCommitG2All[i].length; j++) {
-      logger.info(`Client #${i+1}: Commitment on G2 for coefficient ${j}: ${data.PubCommitG2All[i][j]}`);
+      logger.info(`Client ID #${i+1}: Commitment on G2 for coefficient ${j}: ${data.PubCommitG2All[i][j]}`);
     }
 
     for(let j=0; j<data.PrvCommitAll[i].length; j++) {
-      logger.info(`Client #${i+1}: f_${i+1}(${j}) = ${data.PrvCommitAll[i]}`);
+      logger.info(`Client ID #${i+1}: f_${i+1}(${j}) = ${data.PrvCommitAll[i]}`);
     }
 
   });
