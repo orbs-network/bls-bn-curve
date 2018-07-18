@@ -25,7 +25,6 @@ const BIGINT_BASE = 16
 const INTERNAL_DATA_FILE = "internal.json"
 const INTERACTIVE = false
 
-
 type DataForCommit struct {
   CoefficientsAll [][]*big.Int
   PubCommitG1All  [][]Point
@@ -130,9 +129,10 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   // == Calculate SK, Pks and group PK ==
   // TODO Should be happen only once, after DKG flow is done, and not for every SignAndVerify()
 
+  fmt.Println()
   fmt.Printf("Starting SignAndVerify with threshold=%v n=%v\n", threshold, n)
 
-  fmt.Println("Calculating SK, PK and Commitments - this is done just once, before signing & verifying messages.\n")
+  fmt.Println("Calculating SK, PK and Commitments - this is done just once, before signing & verifying messages.")
 
   skAll := make([]*big.Int, n)
   pkAll := make([][]Point, n)
@@ -146,6 +146,13 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 	}
 	skAll[participant] = bglswrapper.GetSecretKey(prvCommit)
   }
+
+  fmt.Println("Completed one-time calculation of SK, PK and Commitments")
+  fmt.Println("** SECRET KEYS [DEBUG ONLY] **")
+  for _, sk := range skAll {
+	fmt.Printf("** SK: %x\n", sk)
+  }
+  fmt.Println()
 
   //pkOk := true
 
@@ -166,7 +173,7 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   //
 
   for i, pkShares := range pkAll {
-    for j, pkShare := range pkShares {
+	for j, pkShare := range pkShares {
 	  fmt.Printf("PK share [%v][%v]: %v\n", i, j, pointToHexCoords(pkShare))
 	}
   }
@@ -197,12 +204,10 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 	msg = "Hello Orbs"
   }
 
+  fmt.Println()
   fmt.Printf("Message for signature verification: %v\n", msg)
   msgBytes := []byte(msg)
   fmt.Printf("Message bytes: %x\n", msgBytes);
-
-  //_, err = rand.Read(d)
-  //assert.Nil(t, err, "msg data generation failed")
   sigs := make([]Point, n)
 
   // For each participant, generate signature with its SK
@@ -212,10 +217,7 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 	if !bgls.VerifySingleSignature(curve, sigs[participant], pkAll[0][participant], msgBytes) {
 	  return false, fmt.Errorf("signature invalid")
 	}
-  }
-
-  for i, sig := range sigs {
-	fmt.Printf("Signature Share %v: %v\n", i+1, pointToHexCoords(sig))
+	fmt.Printf("PASSED VerifySingleSignature() sig share for client #%v: %v\n", participant, pointToHexCoords(sigs[participant]))
   }
 
   // Generates indices [0..n)
@@ -226,6 +228,7 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 	indices[participant] = big.NewInt(0).Set(index)
   }
 
+  // These are 1-based (not 0-based)
   subIndices := [][]int{
 	{1, 2, 3},
 	{3, 4, 5},
@@ -234,14 +237,19 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   }
 
   for i := 0; i < len(subIndices); i++ {
+	fmt.Println()
+	fmt.Printf("=====> verifySigOnSubset() subIndices #%v <=====\n", subIndices[i])
 	_, err := verifySigOnSubset(curve, indices, sigs, groupPk, msgBytes, subIndices[i])
 	if err != nil {
 	  fmt.Printf("Error in subgroup %v: %v", subIndices[i], err)
 	  return false, err
 	}
+	fmt.Printf("PASSED verifySigOnSubset() subIndices #%v\n", subIndices[i])
 	fmt.Printf("Verify signature completed successfully for subgroup %v\n", subIndices[i])
 	fmt.Println("======================================================")
   }
+
+  fmt.Println()
 
   return true, nil
 }
@@ -266,21 +274,24 @@ func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, grou
   if err != nil {
 	return false, fmt.Errorf("group signature reconstruction failed")
   }
-  fmt.Printf("* Group signature: %v *\n", pointToHexCoords(groupSig1))
+
+  fmt.Printf("* Created group signature: %v *\n", pointToHexCoords(groupSig1))
+
   if !bgls.VerifySingleSignature(curve, groupSig1, groupPk, msgBytes) {
 	return false, fmt.Errorf("group signature invalid")
   }
-
+  fmt.Printf("* PASSED VerifySingleSignature for subgroup signature: %v, group pk %v and msgbytes %v *\n",
+	pointToHexCoords(groupSig1), pointToHexCoords(groupPk), msgBytes)
 
   return true, nil
 }
 
-func pointToHexCoords(p Point) string	{
+func pointToHexCoords(p Point) string {
 
   coords := p.ToAffineCoords()
   res := make([]string, len(coords))
   for i, coord := range coords {
-    res[i] = toHexBigInt(coord)
+	res[i] = toHexBigInt(coord)
   }
   return fmt.Sprintf("%v", res)
 }
