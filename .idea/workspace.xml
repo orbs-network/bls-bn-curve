@@ -4,7 +4,6 @@
     <list default="true" id="a09d8812-db46-4c8c-934a-2686e83d6a83" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bglsmain.go" beforeDir="false" afterPath="$PROJECT_DIR$/bglsmain.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/bglswrapper.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/bglswrapper.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/bgls_test.js" beforeDir="false" afterPath="$PROJECT_DIR$/test/bgls_test.js" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -15,12 +14,12 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="bgls_test.js" pinned="false" current-in-tab="false">
+    <leaf>
+      <file leaf-file-name="bgls_test.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test/bgls_test.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="419">
-              <caret line="88" column="16" selection-start-line="88" selection-start-column="16" selection-end-line="88" selection-end-column="16" />
+            <state relative-caret-position="1819">
+              <caret line="107" column="140" lean-forward="true" selection-start-line="107" selection-start-column="140" selection-end-line="107" selection-end-column="140" />
             </state>
           </provider>
         </entry>
@@ -28,7 +27,7 @@
       <file leaf-file-name="bglswrapper.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
+            <state relative-caret-position="1020">
               <caret line="60" column="13" selection-start-line="60" selection-start-column="13" selection-end-line="60" selection-end-column="13" />
             </state>
           </provider>
@@ -37,7 +36,7 @@
       <file leaf-file-name="commit_data.json" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/commit_data.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="429">
+            <state relative-caret-position="64192">
               <caret line="3776" column="74" selection-start-line="3776" selection-start-column="74" selection-end-line="3776" selection-end-column="74" />
             </state>
           </provider>
@@ -52,11 +51,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="bglsmain.go" pinned="false" current-in-tab="true">
+      <file leaf-file-name="bglsmain.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bglsmain.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="434">
-              <caret line="398" column="19" lean-forward="true" selection-start-line="398" selection-start-column="19" selection-end-line="398" selection-end-column="19" />
+            <state relative-caret-position="256">
+              <caret line="261" column="45" selection-start-line="261" selection-start-column="45" selection-end-line="261" selection-end-column="45" />
             </state>
           </provider>
         </entry>
@@ -64,7 +63,7 @@
       <file leaf-file-name="dkgG2.sol" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/contracts/dkgG2.sol">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="368">
+            <state>
               <caret line="292" column="23" selection-start-line="292" selection-start-column="23" selection-end-line="292" selection-end-column="23" />
             </state>
           </provider>
@@ -73,7 +72,7 @@
       <file leaf-file-name="bglswrapper.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="343">
+            <state>
               <caret line="75" column="5" selection-start-line="75" selection-start-column="5" selection-end-line="75" selection-end-column="5" />
             </state>
           </provider>
@@ -82,7 +81,7 @@
       <file leaf-file-name="bglswrapper_test.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper_test.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="361">
+            <state>
               <caret line="58" column="34" selection-start-line="58" selection-start-column="34" selection-end-line="58" selection-end-column="34" />
             </state>
           </provider>
@@ -99,24 +98,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>publ</find>
-      <find>pubco</find>
-      <find>happy</find>
-      <find>commit(</find>
-      <find>complain</find>
-      <find>compl</find>
-      <find>.commit(</find>
-      <find>complaintpri</find>
-      <find>`&gt;</find>
-      <find>prv</find>
-      <find>taint</find>
-      <find>original</find>
-      <find>tohe</find>
-      <find>origi</find>
-      <find>1f1de55534b11125f98060ef3fdf0728fff1d526554fe95c08b68c1d7c1ea75a</find>
-      <find>join(</find>
-      <find>os.</find>
-      <find>.skip</find>
       <find>happy</find>
       <find>output</find>
       <find>skip</find>
@@ -129,6 +110,24 @@
       <find>--</find>
       <find>verifypri</find>
       <find>complainer</find>
+      <find>i&lt;1</find>
+      <find>verifica</find>
+      <find>now cli</find>
+      <find>happy</find>
+      <find>&gt;</find>
+      <find>==&gt;</find>
+      <find>complaint f</find>
+      <find>contract prop</find>
+      <find>block nun</find>
+      <find>take not</find>
+      <find>signature share</find>
+      <find>for sub</find>
+      <find>pause</find>
+      <find>bytes</find>
+      <find>message by</find>
+      <find>subin</find>
+      <find>subin\</find>
+      <find>it(</find>
     </findStrings>
     <replaceStrings>
       <replace>logger.info</replace>
@@ -172,8 +171,8 @@
         <option value="$PROJECT_DIR$/bglswrapper/bglswrapper.go" />
         <option value="$PROJECT_DIR$/clients.json" />
         <option value="$PROJECT_DIR$/src/bglswrapper.js" />
-        <option value="$PROJECT_DIR$/test/bgls_test.js" />
         <option value="$PROJECT_DIR$/bglsmain.go" />
+        <option value="$PROJECT_DIR$/test/bgls_test.js" />
       </list>
     </option>
   </component>
@@ -192,13 +191,13 @@
     </packageJsonPaths>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-3440" />
-    <option name="y" value="-861" />
+    <option name="y" value="23" />
     <option name="width" value="2293" />
     <option name="height" value="1417" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
+      <autoscrollFromSource ProjectPane="true" />
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
@@ -345,6 +344,7 @@
     <property name="DefaultGoTemplateProperty" value="Go File" />
     <property name="GO_FMT" value="false" />
     <property name="SearchEverywhereHistoryKey" value="alt&#9;FILE&#9;file:///Users/ido/dev/orbs/go/src/github.com/Project-Arda/bgls/curves/altbn128.go" />
+    <property name="full.screen.before.presentation.mode" value="false" />
     <property name="go.gopath.indexing.explicitly.defined" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="javascript.nodejs.core.library.configured.version" value="9.11.1" />
@@ -416,20 +416,20 @@
     </history-entry>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-3440" y="-861" width="2293" height="1417" extended-state="0" />
+    <frame x="0" y="23" width="2293" height="1417" extended-state="0" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.1500218" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
+      <window_info anchor="bottom" id="Event Log" order="12" side_tool="true" />
       <window_info anchor="right" id="Database" order="3" />
       <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
-      <window_info active="true" anchor="bottom" id="Version Control" order="7" visible="true" weight="0.18333334" />
+      <window_info active="true" anchor="bottom" id="Version Control" order="11" visible="true" weight="0.19621213" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.5568182" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="7" />
+      <window_info anchor="bottom" id="Terminal" order="9" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.39848486" />
-      <window_info anchor="bottom" id="TypeScript" order="7" />
+      <window_info anchor="bottom" id="TypeScript" order="8" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="right" id="Cargo" order="4" />
@@ -440,8 +440,33 @@
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32496697" />
-      <window_info anchor="bottom" id="Messages" order="7" />
+      <window_info anchor="bottom" id="Messages" order="10" />
     </layout>
+    <layout-to-restore>
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.5568182" />
+      <window_info anchor="right" id="Cargo" order="4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Messages" order="7" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.16854483" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Database Changes" order="8" show_stripe_button="false" />
+      <window_info anchor="bottom" id="TypeScript" order="9" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32496697" />
+      <window_info id="Designer" order="3" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.39848486" />
+      <window_info anchor="right" id="Palette&#9;" order="5" />
+      <window_info anchor="bottom" id="Terminal" order="10" />
+      <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
+      <window_info active="true" anchor="bottom" id="Version Control" order="12" visible="true" weight="0.2263798" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="right" id="Database" order="3" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+    </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
@@ -463,19 +488,20 @@
     <MESSAGE value="Almost working!" />
     <MESSAGE value="Added prints to Go, still debugging" />
     <MESSAGE value="All working" />
-    <option name="LAST_COMMIT_MESSAGE" value="All working" />
+    <MESSAGE value="Stable, with complaint flow" />
+    <option name="LAST_COMMIT_MESSAGE" value="Stable, with complaint flow" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/test/bgls_test.js</url>
-          <line>214</line>
+          <line>204</line>
           <option name="timeStamp" value="11" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/bglsmain.go</url>
-          <line>371</line>
+          <line>372</line>
           <properties />
           <option name="timeStamp" value="12" />
         </line-breakpoint>
@@ -767,6 +793,28 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/clients.json" />
+    <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="58" column="34" selection-start-line="58" selection-start-column="34" selection-end-line="58" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="75" column="5" selection-start-line="75" selection-start-column="5" selection-end-line="75" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/contracts/dkgG2.sol">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="292" column="23" selection-start-line="292" selection-start-column="23" selection-end-line="292" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/test/dkg-client-test.js_">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="323">
@@ -774,53 +822,31 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/clients.json" />
-    <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper_test.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="361">
-          <caret line="58" column="34" selection-start-line="58" selection-start-column="34" selection-end-line="58" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/contracts/dkgG2.sol">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="368">
-          <caret line="292" column="23" selection-start-line="292" selection-start-column="23" selection-end-line="292" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/commit_data.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="429">
+        <state relative-caret-position="64192">
           <caret line="3776" column="74" selection-start-line="3776" selection-start-column="74" selection-end-line="3776" selection-end-column="74" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="462">
+        <state relative-caret-position="1020">
           <caret line="60" column="13" selection-start-line="60" selection-start-column="13" selection-end-line="60" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bglswrapper/bglswrapper.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="343">
-          <caret line="75" column="5" selection-start-line="75" selection-start-column="5" selection-end-line="75" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test/bgls_test.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="419">
-          <caret line="88" column="16" selection-start-line="88" selection-start-column="16" selection-end-line="88" selection-end-column="16" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/bglsmain.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="434">
-          <caret line="398" column="19" lean-forward="true" selection-start-line="398" selection-start-column="19" selection-end-line="398" selection-end-column="19" />
+        <state relative-caret-position="256">
+          <caret line="261" column="45" selection-start-line="261" selection-start-column="45" selection-end-line="261" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/bgls_test.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1819">
+          <caret line="107" column="140" lean-forward="true" selection-start-line="107" selection-start-column="140" selection-end-line="107" selection-end-column="140" />
         </state>
       </provider>
     </entry>

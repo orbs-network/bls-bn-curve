@@ -227,7 +227,7 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   //d := make([]byte, 64)
   var msg string
   if INTERACTIVE {
-	msg = readFromStdin()
+	msg = readFromStdin("*** Enter message: ")
   } else {
 	msg = "Hello Orbs"
   }
@@ -235,7 +235,7 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   fmt.Println()
   fmt.Printf("Message for signature verification: %v\n", msg)
   msgBytes := []byte(msg)
-  fmt.Printf("Message bytes: %x\n", msgBytes);
+  fmt.Printf("Message bytes: %v\n", msgBytes);
   sigs := make([]Point, n)
 
   // For each participant, generate signature with its SK
@@ -268,8 +268,9 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 
   for i := 0; i < len(subIndices); i++ {
 	fmt.Println()
-	fmt.Printf("=====> verifySigOnSubset() subIndices #%v <=====\n", subIndices[i])
-	_, err := verifySigOnSubset(curve, indices, sigs, groupPk, msgBytes, subIndices[i])
+    fmt.Printf("=====> verifySigOnSubset() subIndices #%v <=====\n", subIndices[i])
+    readFromStdin("")
+    _, err := verifySigOnSubset(curve, indices, sigs, groupPk, msgBytes, subIndices[i])
 	if err != nil {
 	  fmt.Printf("Error in subgroup %v: %v", subIndices[i], err)
 	  return false, err
@@ -296,9 +297,9 @@ func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, grou
   }
 
   fmt.Printf("Sending to SignatureReconstruction(): indices=%v\n", subIndices)
-  for i, subSig := range subSigs {
-	fmt.Printf("Signature Share %v: %v\n", subIndicesBigInt[i], pointToHexCoords(subSig))
-  }
+  //for i, subSig := range subSigs {
+  //fmt.Printf("Signature Share %v: %v\n", subIndicesBigInt[i], pointToHexCoords(subSig))
+  //}
   groupSig1, err := bglswrapper.SignatureReconstruction(
 	curve, subSigs, subIndicesBigInt)
   if err != nil {
@@ -310,8 +311,8 @@ func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, grou
   if !bgls.VerifySingleSignature(curve, groupSig1, groupPk, msgBytes) {
 	return false, fmt.Errorf("group signature invalid")
   }
-  fmt.Printf("* PASSED VerifySingleSignature for subgroup signature: %v, group pk %v and msgbytes %v *\n",
-	pointToHexCoords(groupSig1), pointToHexCoords(groupPk), msgBytes)
+  fmt.Printf("* PASSED VerifySingleSignature for subgroup signature: %v\n", pointToHexCoords(groupSig1))
+  fmt.Printf("Group PK: %v\n", pointToHexCoords(groupPk))
 
   return true, nil
 }
@@ -703,10 +704,10 @@ func Init() {
 
 }
 
-func readFromStdin() (string) {
+func readFromStdin(caption string) (string) {
   reader := bufio.NewReader(os.Stdin)
   fmt.Println()
-  fmt.Print("*** Enter message: ")
+  fmt.Print(caption)
   text, _ := reader.ReadString('\n')
   return text
 }

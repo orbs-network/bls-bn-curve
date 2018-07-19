@@ -40,7 +40,7 @@ const DEPOSIT_WEI = 25000000000000000000; // 1e18 * 25
 const MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED = 11;
 
 const CLIENTS = require('../clients.json');
-const gasUsed = { join: 0, commit: 0, phaseChange: 0 };
+const gasUsed = {join: 0, commit: 0, phaseChange: 0};
 
 const DKGG2 = artifacts.require('../contracts/dkgG2.sol');
 
@@ -56,42 +56,29 @@ logger.info('===> Start <===');
 // Mocha will throw error if idle for 5 minutes and there is no done() callback.
 
 
-
 contract('dkgG2', (accounts) => {
 
-  it.skip('===> Happy flow', async () => {
-
-    logger.info('Now running happy flow');
-    pause();
-
-    printAccounts(accounts);
-    await deploy(accounts);
-    await joinAllClients();
-    getCommitData();
-    await commitAllClients(allCommitDataJson);
-    await phaseChange(CLIENTS[0]);
-    signAndVerify();
-
-    logger.info('Completed happy flow');
-  });
+  // it('===> Happy flow', async () => {
+  //   logger.info('Now running happy flow');
+  //   await deploy(accounts);
+  //   await joinAllClients();
+  //   getCommitData();
+  //   await commitAllClients(allCommitDataJson);
+  //   await phaseChange(CLIENTS[0]);
+  //   signAndVerify();
+  //   logger.info('Completed happy flow');
+  // });
 
   it('===> Complaint flow', async () => {
-
     const COMPLAINER_INDEX = 2;
     const ACCUSED_INDEX = 1;
-
-
     logger.info('Now running a flow where one of the clients sends invalid commitments, and another client complains about it');
-    pause();
-    printAccounts(accounts);
     await deploy(accounts);
     await joinAllClients();
     getCommitDataWithErrors(); // taint prv [0][1]
     await commitAllClients(allCommitDataJson);
     verifyPrivateCommit(COMPLAINER_INDEX, ACCUSED_INDEX); // TODO   Fill this
     await sendComplaint(COMPLAINER_INDEX, ACCUSED_INDEX);
-
-
     logger.info('Completed complaint flow');
   });
 
@@ -128,12 +115,14 @@ async function join(client, i) {
 }
 
 async function joinAllClients() {
-  logger.info('=====> join <=====');
+  logger.info('=====> Starting join <=====');
   let i = 0;
   for (const client of CLIENTS) {
-    logger.debug(`Calling join() with client ID #${i+1}`);
+    logger.debug(`Calling join() with client ID #${i + 1}`);
 
-    // if(i===0) { pause(); }
+    if (i < 2) {
+      pause();
+    }
     const res = await join(client, i);
     // logger.debug(`Result of join() with client ID #${i+1}: ${JSON.stringify(res)}`);
     i++;
@@ -147,23 +136,23 @@ async function joinAllClients() {
 
 
 // TODO Remove this - done on Go side
-function taintCommitmentData(json)  {
+function taintCommitmentData(json) {
   const {CoefficientsAll, PubCommitG1All, PubCommitG2All, PrvCommitAll} = json;
 
   const clientIdToTaint = 1;
 
   const originalValue = PubCommitG1All[clientIdToTaint][0][0];
   // logger.info(`originalValue: ${originalValue} ${JSON.stringify(originalValue)}`);
-  const lastChar = originalValue.substring(originalValue.length-1);
+  const lastChar = originalValue.substring(originalValue.length - 1);
   const taintedLastChar = lastChar === "0" ? "1" : "0";
-  const taintedValue = originalValue.substring(0, originalValue.length-1) + taintedLastChar;
+  const taintedValue = originalValue.substring(0, originalValue.length - 1) + taintedLastChar;
 
   PubCommitG1All[clientIdToTaint][0][0] = taintedValue;
   logger.info(`Original Value: ${originalValue} ; taintedValue: ${taintedValue}`);
   logger.info(`PubCommitG1All[clientIdToTaint][0]: ${PubCommitG1All[clientIdToTaint][0]}`);
 }
 
-function verifyPrivateCommit(complainerIndex, accusedIndex)  {
+function verifyPrivateCommit(complainerIndex, accusedIndex) {
 
   logger.info(`Now client ID #${complainerIndex} is verifying the private commitment of client ID #${accusedIndex}`);
   logger.info(`The private commitment of client ID #${accusedIndex} was intentionally tainted.`);
@@ -175,7 +164,7 @@ function verifyPrivateCommit(complainerIndex, accusedIndex)  {
 }
 
 async function commitAllClients(json) {
-  logger.info(` =====> commit <=====`);
+  logger.info(` =====> Starting commit <=====`);
   const {CoefficientsAll, PubCommitG1All, PubCommitG2All, PrvCommitAll} = json;
 
   logger.info("Notice the difference in gas costs between join() and commit()");
@@ -183,7 +172,9 @@ async function commitAllClients(json) {
   let i = 0;
   for (const client of CLIENTS) {
     logger.debug("Calling commit()", i);
-    if(i<2) { pause(); }
+    if (i < 2) {
+      pause();
+    }
     const res = await commit(client, i, CoefficientsAll[i], PubCommitG1All[i], PubCommitG2All[i], PrvCommitAll[i]);
     i++;
   }
@@ -195,16 +186,15 @@ async function commitAllClients(json) {
 async function sendComplaint(complainerIndex, accusedIndex) {
 
   logger.info(`Now client ID #${complainerIndex} is sending a complaint on client ID #${accusedIndex}`);
-
+  pause();
   const res = await dkgContract.complaintPrivateCommit(complainerIndex, accusedIndex, {
-    from: CLIENTS[complainerIndex-1].address,
+    from: CLIENTS[complainerIndex - 1].address,
     gasLimit: 3000000
   });
 
   logger.info(`Complaint sent. If the complaint was justified, the deposit of the accused client was split between the other clients, who also had their deposits returned.`);
   logger.info(`If the complaint was not justified, the deposit of the complaining client was split between the other clients, who also had their deposits returned.`);
   logger.info(`In either case, the contract is closed.`);
-
 
 
 }
@@ -277,13 +267,13 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
 function getCommitData() {
   bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT);
   allCommitDataJson = require(bgls.OUTPUT_PATH);
-  printDataPerClient(allCommitDataJson);
+  // printDataPerClient(allCommitDataJson);
   logger.debug('Read contents of file ', bgls.OUTPUT_PATH);
   // pause();
 
 }
 
-function getCommitDataWithErrors()  {
+function getCommitDataWithErrors() {
   bgls.GetCommitDataForAllParticipantsWithIntentionalErrors(THRESHOLD, CLIENT_COUNT);
   logger.info(`Reading data file (with intentional errors) ${bgls.OUTPUT_PATH} ...`);
   allCommitDataJson = require(bgls.OUTPUT_PATH);
@@ -294,7 +284,7 @@ async function deploy(accounts) {
   dkgContract = await DKGG2.new(THRESHOLD, CLIENT_COUNT, DEPOSIT_WEI);
   // TODO Use deployed() here?
   logger.info(`Deployed DKG contract on address ${dkgContract.address}, txHash: ${dkgContract.transactionHash}`);
-  logger.info(`Contract properties: threshold=${THRESHOLD} numParticipants=${CLIENT_COUNT} depositWei=${DEPOSIT_WEI}`);
+  logger.info(`Contract properties: numParticipants=${CLIENT_COUNT}  | threshold=${THRESHOLD} | depositWei=${DEPOSIT_WEI}`);
   // accounts.forEach((a, i) => logger.info(`Account ${i}: ${accounts[i]}`));
   // await printValuesFromContract();
   pause();
@@ -315,14 +305,15 @@ async function phaseChange(client) {
 
   // FIXME
 
-  logger.info('Block number before mining: ', web3.eth.blockNumber);
+  // logger.info('Block number before mining: ', web3.eth.blockNumber);
   pause();
   await mineNBlocks(11);
 
   // FIXME
 
-  logger.info('Block number after mining: ', web3.eth.blockNumber);
-  logger.info(`No one complained, so calling phaseChange() to finalize commit phase. Take note of the present balance of accounts and compare to after calling phaseChange().`);
+  // logger.info('Block number after mining: ', web3.eth.blockNumber);
+  logger.info(`No one complained, so calling phaseChange() to finalize commit phase. `);
+  logger.info(`Take note of the present balance of accounts and compare to after calling phaseChange().`);
   pause();
   const res = await dkgContract.phaseChange({
     from: client.address,
@@ -347,7 +338,7 @@ async function phaseChange(client) {
   pause();
 }
 
-function getTotalGasUsed()  {
+function getTotalGasUsed() {
   return gasUsed.join + gasUsed.commit + gasUsed.phaseChange;
 }
 
@@ -393,15 +384,15 @@ async function printValuesFromContract() {
 
 }
 
-function printAccounts()  {
-  for(const a of CLIENTS)  {
+function printAccounts() {
+  for (const a of CLIENTS) {
     logger.info(`Account: ${a.address}`)
   }
   logger.info(`Total of ${CLIENTS.length} accounts`);
 }
 
 function toShortHex(hexStr) {
-  return hexStr.substr(0, 6) + ".." + hexStr.substr(hexStr.length-4);
+  return hexStr.substr(0, 6) + ".." + hexStr.substr(hexStr.length - 4);
 }
 
 function printDataPerClient(data) {
@@ -413,19 +404,19 @@ function printDataPerClient(data) {
     console.log('');
     logger.info(`===> Data for client ID #${client.id} ${client.address} <===`);
     logger.info(`===================================================`);
-    for(let j=0; j<data.CoefficientsAll[i].length; j++) {
-      logger.info(`Client ID #${i+1}: Coefficient ${j}: ${data.CoefficientsAll[i][j]}`);
+    for (let j = 0; j < data.CoefficientsAll[i].length; j++) {
+      logger.info(`Client ID #${i + 1}: Coefficient ${j}: ${data.CoefficientsAll[i][j]}`);
     }
-    for(let j=0; j<data.PubCommitG1All[i].length; j++) {
-      logger.info(`Client ID #${i+1}: Commitment on G1 for coefficient ${j}: ${data.PubCommitG1All[i][j]}`);
-    }
-
-    for(let j=0; j<data.PubCommitG2All[i].length; j++) {
-      logger.info(`Client ID #${i+1}: Commitment on G2 for coefficient ${j}: ${data.PubCommitG2All[i][j]}`);
+    for (let j = 0; j < data.PubCommitG1All[i].length; j++) {
+      logger.info(`Client ID #${i + 1}: Commitment on G1 for coefficient ${j}: ${data.PubCommitG1All[i][j]}`);
     }
 
-    for(let j=0; j<data.PrvCommitAll[i].length; j++) {
-      logger.info(`Client ID #${i+1}: f_${i+1}(${j+1}) = ${toShortHex(data.PrvCommitAll[i][j])}`);
+    for (let j = 0; j < data.PubCommitG2All[i].length; j++) {
+      logger.info(`Client ID #${i + 1}: Commitment on G2 for coefficient ${j}: ${data.PubCommitG2All[i][j]}`);
+    }
+
+    for (let j = 0; j < data.PrvCommitAll[i].length; j++) {
+      logger.info(`Client ID #${i + 1}: f_${i + 1}(${j + 1}) = ${toShortHex(data.PrvCommitAll[i][j])}`);
     }
 
   });
