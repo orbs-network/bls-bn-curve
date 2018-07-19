@@ -58,6 +58,22 @@ func getPrCommit() {
 
 }
 
+func GetCommitDataForAllParticipantsWithIntentionalErrors(curve CurveSystem, threshold int, n int) (*DataForCommit, error) {
+
+  data, _ := GetCommitDataForAllParticipants(curve, threshold, n);
+  data = taintData(data)
+
+  return data, nil
+}
+
+func taintData(data *DataForCommit) *DataForCommit {
+  fmt.Printf("Original value (before taint): %x\n", data.PrvCommitAll[0][1])
+  data.PrvCommitAll[0][1].Add(data.PrvCommitAll[0][1], big.NewInt(1))
+  fmt.Printf("Tainted value %x\n", data.PrvCommitAll[0][1])
+  fmt.Println()
+  return data
+}
+
 func GetCommitDataForAllParticipants(curve CurveSystem, threshold int, n int) (*DataForCommit, error) {
 
   fmt.Printf("GetCommitDataForAllParticipants() called with threshold=%v n=%v\n", n, threshold)
@@ -87,7 +103,7 @@ func GetCommitDataForAllParticipants(curve CurveSystem, threshold int, n int) (*
 	  }
 	  verifyResult := bglswrapper.VerifyPublicCommitment(curve, commitG1[i], commitG2[i])
 	  if !verifyResult {
-	    return nil, fmt.Errorf("VerifyPublicCommitment() failed for (participant=%v i=%v)", participant, i)
+		return nil, fmt.Errorf("VerifyPublicCommitment() failed for (participant=%v i=%v)", participant, i)
 	  }
 	  fmt.Printf("PASSED VerifyPublicCommitment() (p=%v i=%v)\n", participant, i)
 	}
@@ -184,10 +200,10 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   //}
   //
 
-  for i, pkShares := range pkAll {
-	for j, pkShare := range pkShares {
-	  fmt.Printf("PK share [%v][%v]: %v\n", i, j, pointToHexCoords(pkShare))
-	}
+  fmt.Println("Public Key shares - same values are calculated by each client")
+  fmt.Println()
+  for i, pkShare := range pkAll[0] {
+	fmt.Printf("PK share [%v]: %v\n", i, pointToHexCoords(pkShare))
   }
 
   groupPk := bglswrapper.GetGroupPublicKey(curve, pubCommitG2Zero)
@@ -342,6 +358,24 @@ func main() {
   //fmt.Println(flag.Args())
   switch cmd {
 
+  case "VerifyPrivateCommitment":
+	// func VerifyPrivateCommitment(curve CurveSystem, myIndex *big.Int, prvCommit *big.Int, pubCommitG1 []Point) bool {
+	myIndex, _ := strconv.Atoi(flag.Args()[0])        // 2   1-based
+	prvCommitIndex, _ := strconv.Atoi(flag.Args()[1]) // 1   1-based
+	dataFile := flag.Arg(2)
+	data, err := readDataFile(dataFile, curve)
+	if err != nil {
+	  fmt.Println("Error in VerifyPrivateCommitment():", err)
+	  return
+	}
+
+	pubCommitG1 := data.PubCommitG1All[prvCommitIndex-1]
+	prvCommit := data.PrvCommitAll[prvCommitIndex-1][myIndex-1]
+	// prvCommit is prvCommitAll[0][1] - this is what client 0 has commited to client 1
+	// pubCommitG1 [0] - this is all of client 0 public commitments over G1
+	boolRes := bglswrapper.VerifyPrivateCommitment(curve, big.NewInt(int64(myIndex)), prvCommit, pubCommitG1)
+	fmt.Printf("%v\n", boolToStr(boolRes))
+
   case "GetCommitDataForAllParticipants":
 	fmt.Println("--- GetCommitDataForAllParticipants ---")
 	threshold := toInt(flag.Arg(0))
@@ -366,28 +400,36 @@ func main() {
 	  panic(err)
 	}
 
+  case "GetCommitDataForAllParticipantsWithIntentionalErrors":
+	fmt.Println("--- GetCommitDataForAllParticipantsWithIntentionalErrors ---")
+	threshold := toInt(flag.Arg(0))
+	n := toInt(flag.Arg(1))
+	exportDataFile := flag.Arg(2)
+
+	commitData, err := GetCommitDataForAllParticipantsWithIntentionalErrors(curve, threshold, n)
+	if err != nil {
+	  fmt.Println("Error in GetCommitDataForAllParticipantsWithIntentionalErrors():", err)
+	}
+	json, err := marshal(commitData)
+	if err != nil {
+	  fmt.Println("Error marshalling commit data", err)
+	}
+	os.Stdout.Write(json)
+	err = ioutil.WriteFile(exportDataFile, json, 0644)
+	if err != nil {
+	  panic(err)
+	}
+	//err = writeGob("./data.gob", commitData)
+	if err != nil {
+	  panic(err)
+	}
+
   case "SignAndVerify":
 	fmt.Println("--- SignAndVerify ---")
 	threshold := toInt(flag.Arg(0))
 	n := toInt(flag.Arg(1))
 	dataFile := flag.Arg(2)
-	var inBuf []byte
-	var err error
-	inBuf, err = ioutil.ReadFile(dataFile)
-	var data = new(DataForCommit)
-	//err = readGob("./data.gob", data)
-	if err != nil {
-	  panic(err)
-	}
-
-	//inBuf2 := []byte(strings.Replace(string(inBuf), "\"", "", -1)) // remove all double-quotes
-	//fmt.Printf("\ninBuf=%v\n\n", string(inBuf2))
-	data, err = unmarshal(curve, inBuf)
-
-	//err = json.Unmarshal(inBuf2, &data)
-	//if err != nil {
-	//  panic(err)
-	//}
+	data, err := readDataFile(dataFile, curve)
 	isOk, err := SignAndVerify(curve, threshold, n, data)
 	if err != nil {
 	  fmt.Println("Error in SignAndVerify():", err)
@@ -396,88 +438,92 @@ func main() {
 	fmt.Printf("SignAndVerify() ok? %v\n", isOk)
 
 	/*
-	  case "GetDataForCommit":
-		threshold := toInt(flag.Args()[0])
-		clientCount := toInt(flag.Args()[1])
-		res := GetDataForCommit(curve, threshold, clientCount)
-		json, err := json.Marshal(res)
-		if err != nil {
-		  fmt.Println("Error in json:", err)
-		}
-		//fmt.Printf("%T %v\n", res, res)
-		fmt.Printf("%v", string(json))
+	case "GetDataForCommit":
+	threshold := toInt(flag.Args()[0])
+	clientCount := toInt(flag.Args()[1])
+	res := GetDataForCommit(curve, threshold, clientCount)
+	json, err := json.Marshal(res)
+	if err != nil {
+		fmt.Println("Error in json:", err)
+	}
+	//fmt.Printf("%T %v\n", res, res)
+	fmt.Printf("%v", string(json))
 
-	  case "CoefficientGen":
-		// func CoefficientGen(curve CurveSystem) (*big.Int, Point, Point, error) {
-		x, g1commit, g2commit, error := dkg.CoefficientGen(curve)
-		fmt.Printf("%v %v %v %v\n", bigIntToStr(x), pointToStr(g1commit), pointToStr(g2commit), error)
-	  case "LoadPublicKeyG1":
-		// func LoadPublicKeyG1(curve CurveSystem, sk *big.Int) Point {
-		sk := toBigInt(flag.Args()[0])
-		point := dkg.LoadPublicKeyG1(curve, sk)
-		fmt.Printf("%v\n", pointToStr(point))
-	  case "GetPrivateCommitment":
-		// func GetPrivateCommitment(curve CurveSystem, ind *big.Int, coefficients []*big.Int) *big.Int {
-		ind := toBigInt(flag.Args()[0])
-		coefficients := toBigInts(flag.Args()[1:])
-		bigInt := dkg.GetPrivateCommitment(curve, ind, coefficients)
-		fmt.Printf("%v\n", bigIntToStr(bigInt))
-	  case "GetGroupPublicKey":
-		// func GetGroupPublicKey(curve CurveSystem, pubCommitG2 []Point) Point {
-		pubCommitG2 := toPoints(flag.Args())
-		point := dkg.GetGroupPublicKey(curve, pubCommitG2)
-		fmt.Printf("%v\n", pointToStr(point))
-	  case "VerifyPublicCommitment":
-		// func VerifyPublicCommitment(curve CurveSystem, pubCommitG1 Point, pubCommitG2 Point) bool
-		pubCommitG1 := toPoint(flag.Args()[0:POINT_ELEMENTS])
-		pubCommitG2 := toPoint(flag.Args()[POINT_ELEMENTS : POINT_ELEMENTS+POINT_ELEMENTS])
-		boolRes := dkg.VerifyPublicCommitment(curve, pubCommitG1, pubCommitG2)
-		fmt.Printf("%v\n", boolToStr(boolRes))
-	  case "VerifyPrivateCommitment":
-		// func VerifyPrivateCommitment(curve CurveSystem, myIndex *big.Int, prvCommit *big.Int, pubCommitG1 []Point) bool {
-		myIndex := toBigInt(flag.Args()[0])
-		prvCommit := toBigInt(flag.Args()[1])
-		pubCommitG1 := toPoints(flag.Args()[2:])
-		boolRes := dkg.VerifyPrivateCommitment(curve, myIndex, prvCommit, pubCommitG1)
-		fmt.Printf("%v\n", boolToStr(boolRes))
+	case "CoefficientGen":
+	// func CoefficientGen(curve CurveSystem) (*big.Int, Point, Point, error) {
+	x, g1commit, g2commit, error := dkg.CoefficientGen(curve)
+	fmt.Printf("%v %v %v %v\n", bigIntToStr(x), pointToStr(g1commit), pointToStr(g2commit), error)
+	case "LoadPublicKeyG1":
+	// func LoadPublicKeyG1(curve CurveSystem, sk *big.Int) Point {
+	sk := toBigInt(flag.Args()[0])
+	point := dkg.LoadPublicKeyG1(curve, sk)
+	fmt.Printf("%v\n", pointToStr(point))
+	case "GetPrivateCommitment":
+	// func GetPrivateCommitment(curve CurveSystem, ind *big.Int, coefficients []*big.Int) *big.Int {
+	ind := toBigInt(flag.Args()[0])
+	coefficients := toBigInts(flag.Args()[1:])
+	bigInt := dkg.GetPrivateCommitment(curve, ind, coefficients)
+	fmt.Printf("%v\n", bigIntToStr(bigInt))
+	case "GetGroupPublicKey":
+	// func GetGroupPublicKey(curve CurveSystem, pubCommitG2 []Point) Point {
+	pubCommitG2 := toPoints(flag.Args())
+	point := dkg.GetGroupPublicKey(curve, pubCommitG2)
+	fmt.Printf("%v\n", pointToStr(point))
+	case "VerifyPublicCommitment":
+	// func VerifyPublicCommitment(curve CurveSystem, pubCommitG1 Point, pubCommitG2 Point) bool
+	pubCommitG1 := toPoint(flag.Args()[0:POINT_ELEMENTS])
+	pubCommitG2 := toPoint(flag.Args()[POINT_ELEMENTS : POINT_ELEMENTS+POINT_ELEMENTS])
+	boolRes := dkg.VerifyPublicCommitment(curve, pubCommitG1, pubCommitG2)
+	fmt.Printf("%v\n", boolToStr(boolRes))
 
-	  case "CalculatePrivateCommitment":
-		// func CalculatePrivateCommitment(curve CurveSystem, index *big.Int, pubCommit []Point) Point {
-		index := toBigInt(flag.Args()[0])
-		pubCommit := toPoints(flag.Args()[1:])
-		point := dkg.CalculatePrivateCommitment(curve, index, pubCommit)
-		fmt.Printf("%v\n", pointToStr(point))
-	  case "GetSecretKey":
-		// func GetSecretKey(prvCommits []*big.Int) *big.Int {
-		prvCommits := toBigInts(flag.Args())
-		bigInt := dkg.GetSecretKey(prvCommits)
-		fmt.Printf("%v\n", bigIntToStr(bigInt))
-	  case "GetSpecificPublicKey":
-		// func GetSpecificPublicKey(curve CurveSystem, index *big.Int, threshold int, pubCommitG2 []Point) Point {
-		index := toBigInt(flag.Args()[0])
-		threshold := toInt(flag.Args()[1])
-		pubCommitG2 := toPoints(flag.Args()[2:])
-		pointRes := dkg.GetSpecificPublicKey(curve, index, threshold, pubCommitG2)
-		fmt.Printf("%v\n", pointToStr(pointRes))
-	  case "GetAllPublicKey":
-		// func GetAllPublicKey(curve CurveSystem, threshold int, pubCommitG2 []Point) []Point {
-		threshold := toInt(flag.Args()[0])
-		pubCommitG2 := toPoints(flag.Args()[1:])
-		pointsRes := dkg.GetAllPublicKey(curve, threshold, pubCommitG2)
-		fmt.Printf("%v\n", pointsToStr(pointsRes))
-	  case "SignatureReconstruction":
-		// func SignatureReconstruction(curve CurveSystem, sigs []Point, signersIndices []*big.Int) (Point, error) {
-		// We don't know in advance how many sigs there are so take a param for that,
-		// multiply by how many array elements create a single point, then read the points, then read the next param
-		sigsLen := toInt(flag.Args()[0])
-		sigsElements := sigsLen * POINT_ELEMENTS
-		sigs := toPoints(flag.Args()[1:sigsElements])
-		signersIndices := toBigInts(flag.Args()[sigsElements:])
-		point, err := dkg.SignatureReconstruction(curve, sigs, signersIndices)
-		fmt.Printf("%v %v\n", pointToStr(point), err)
-	*/
+	case "CalculatePrivateCommitment":
+	// func CalculatePrivateCommitment(curve CurveSystem, index *big.Int, pubCommit []Point) Point {
+	index := toBigInt(flag.Args()[0])
+	pubCommit := toPoints(flag.Args()[1:])
+	point := dkg.CalculatePrivateCommitment(curve, index, pubCommit)
+	fmt.Printf("%v\n", pointToStr(point))
+	case "GetSecretKey":
+	// func GetSecretKey(prvCommits []*big.Int) *big.Int {
+	prvCommits := toBigInts(flag.Args())
+	bigInt := dkg.GetSecretKey(prvCommits)
+	fmt.Printf("%v\n", bigIntToStr(bigInt))
+	case "GetSpecificPublicKey":
+	// func GetSpecificPublicKey(curve CurveSystem, index *big.Int, threshold int, pubCommitG2 []Point) Point {
+	index := toBigInt(flag.Args()[0])
+	threshold := toInt(flag.Args()[1])
+	pubCommitG2 := toPoints(flag.Args()[2:])
+	pointRes := dkg.GetSpecificPublicKey(curve, index, threshold, pubCommitG2)
+	fmt.Printf("%v\n", pointToStr(pointRes))
+	case "GetAllPublicKey":
+	// func GetAllPublicKey(curve CurveSystem, threshold int, pubCommitG2 []Point) []Point {
+	threshold := toInt(flag.Args()[0])
+	pubCommitG2 := toPoints(flag.Args()[1:])
+	pointsRes := dkg.GetAllPublicKey(curve, threshold, pubCommitG2)
+	fmt.Printf("%v\n", pointsToStr(pointsRes))
+	case "SignatureReconstruction":
+	// func SignatureReconstruction(curve CurveSystem, sigs []Point, signersIndices []*big.Int) (Point, error) {
+	// We don't know in advance how many sigs there are so take a param for that,
+	// multiply by how many array elements create a single point, then read the points, then read the next param
+	sigsLen := toInt(flag.Args()[0])
+	sigsElements := sigsLen * POINT_ELEMENTS
+	sigs := toPoints(flag.Args()[1:sigsElements])
+	signersIndices := toBigInts(flag.Args()[sigsElements:])
+	point, err := dkg.SignatureReconstruction(curve, sigs, signersIndices)
+	fmt.Printf("%v %v\n", pointToStr(point), err)
+*/
   }
 
+}
+
+func readDataFile(dataFile string, curve CurveSystem) (*DataForCommit, error) {
+  var inBuf []byte
+  var err error
+  inBuf, err = ioutil.ReadFile(dataFile)
+  //err = readGob("./data.gob", data)
+  if err != nil {
+	panic(err)
+  }
+  return unmarshal(curve, inBuf)
 }
 func unmarshal(curve CurveSystem, bytes []byte) (*DataForCommit, error) {
 

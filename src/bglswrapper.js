@@ -3,7 +3,7 @@ const CWD = __dirname;
 const EXEC_PATH = `${CWD}/../bls-bn-curve`;
 const OUTPUT_PATH = `${CWD}/../commit_data.json`;
 const readlineSync = require('readline-sync');
-const { createLogger, format, transports } = require('winston');
+const {createLogger, format, transports} = require('winston');
 
 const INTERACTIVE = true;
 const SHOW_DEBUG = false;
@@ -19,10 +19,14 @@ const logger = createLogger({
   ]
 });
 
-function pause()  {
-  if(INTERACTIVE) {
+function pause() {
+  if (INTERACTIVE) {
     readlineSync.keyInPause();
   }
+}
+
+function runExternal(cmd) {
+  return execSync(cmd, {cwd: CWD}, {stdio: [0, 1, 2]});
 }
 
 function GetCommitDataForAllParticipants(threshold, clientCount) {
@@ -30,10 +34,31 @@ function GetCommitDataForAllParticipants(threshold, clientCount) {
 
   logger.info(`Calling external command ${cmd}`);
   pause();
-  execSync(cmd, {cwd: CWD});
+  const res = runExternal(cmd);
   const json = require(OUTPUT_PATH);
   logger.debug(`GetCommitDataForAllParticipants(): Read data from file: ${JSON.stringify(json)}`);
-  return OUTPUT_PATH;
+  return res;
+}
+
+function GetCommitDataForAllParticipantsWithIntentionalErrors(threshold, clientCount) {
+  const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipantsWithIntentionalErrors ${threshold} ${clientCount} ${OUTPUT_PATH}`;
+
+  logger.info(`Calling external command ${cmd}`);
+  pause();
+  const res = runExternal(cmd);
+  const json = require(OUTPUT_PATH);
+  logger.debug(`GetCommitDataForAllParticipantsWithIntentionalErrors(): Read data from file: ${JSON.stringify(json)}`);
+  return res;
+}
+
+function VerifyPrivateCommitment(complainerIndex, accusedIndex) {
+  const cmd = `${EXEC_PATH} -func=VerifyPrivateCommitment ${complainerIndex} ${accusedIndex} ${OUTPUT_PATH}`;
+  logger.info(`Calling external command ${cmd}`);
+  pause();
+  const buf = runExternal(cmd);
+  // const json = require(OUTPUT_PATH);
+  logger.debug(`VerifyPrivateCommitment(): Returned buffer: ${buf}`);
+  return buf;
 }
 
 
@@ -64,7 +89,10 @@ function SignAndVerify(threshold, clientCount) {
 
 module.exports = {
   GetCommitDataForAllParticipants: GetCommitDataForAllParticipants,
+  GetCommitDataForAllParticipantsWithIntentionalErrors: GetCommitDataForAllParticipantsWithIntentionalErrors,
   SignAndVerify: SignAndVerify,
+  VerifyPrivateCommitment: VerifyPrivateCommitment,
   logger: logger,
-  pause: pause
+  pause: pause,
+  OUTPUT_PATH: OUTPUT_PATH
 };
