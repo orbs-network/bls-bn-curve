@@ -20,9 +20,6 @@ import (
 
 var cmd string
 
-const POINT_ELEMENTS = 4
-const BIGINT_BASE = 16
-const INTERNAL_DATA_FILE = "internal.json"
 const INTERACTIVE = true
 
 type DataForCommit struct {
@@ -39,47 +36,35 @@ type JsonDataForCommit struct {
   PrvCommitAll    [][]string
 }
 
-//func (data *DataForCommit) MarshalJSON() ([]byte, error) {
-//
-//}
-
 // Conversions between array of numbers and G1/G2 points:
 //func (g1Point *altbn128Point1) ToAffineCoords() []*big.Int
 // func (g1Point *altbn128Point2) ToAffineCoords() []*big.Int
 // func (curve *altbn128) MakeG2Point(coords []*big.Int, check bool) (Point, bool)
 
-func getPubCommitG1() {
+func GetCommitDataForAllParticipantsWithIntentionalErrors(curve CurveSystem, threshold int, n int, complainerIndex int, maliciousIndex int) (*DataForCommit, error) {
 
-}
-func getPubCommitG2() {
-
-}
-func getPrCommit() {
-
-}
-
-func GetCommitDataForAllParticipantsWithIntentionalErrors(curve CurveSystem, threshold int, n int, complainerIndex int, accusedIndex int) (*DataForCommit, error) {
-
-  data, _ := GetCommitDataForAllParticipants(curve, threshold, n);
-  data = taintData(data, complainerIndex, accusedIndex)
+  data, _ := GetCommitDataForAllParticipants(curve, threshold, n)
+  data = taintData(data, complainerIndex, maliciousIndex)
 
   return data, nil
 }
 
-func taintData(data *DataForCommit, complainerIndex int, accusedIndex int) *DataForCommit {
-  fmt.Printf("Original value (before taint): %x\n", data.PrvCommitAll[accusedIndex][complainerIndex])
-  data.PrvCommitAll[accusedIndex][complainerIndex].Add(data.PrvCommitAll[accusedIndex][complainerIndex], big.NewInt(1))
-  fmt.Printf("Tainted value %x\n", data.PrvCommitAll[accusedIndex][complainerIndex])
+func taintData(data *DataForCommit, complainerIndex int, maliciousIndex int) *DataForCommit {
+  fmt.Printf("Original value (before taint): %x\n", data.PrvCommitAll[maliciousIndex][complainerIndex])
+  data.PrvCommitAll[maliciousIndex][complainerIndex].Add(data.PrvCommitAll[maliciousIndex][complainerIndex], big.NewInt(1))
+  fmt.Printf("Tainted value %x\n", data.PrvCommitAll[maliciousIndex][complainerIndex])
   fmt.Println()
   return data
 }
 
-// Generate data for commitment:
-// Polynomial coefficients
+// Data for commitment:
+// Generate t+1 random coefficients from (mod p) field for the polynomial
+// Generate public commitments
+// Generate private commitments
 
-func GetCommitDataForAllParticipants(curve CurveSystem, threshold int, n int) (*DataForCommit, error) {
+func GetCommitDataForAllParticipants(curve CurveSystem, t int, n int) (*DataForCommit, error) {
 
-  fmt.Printf("GetCommitDataForAllParticipants() called with threshold=%v n=%v\n", n, threshold)
+  fmt.Printf("GetCommitDataForAllParticipants() called with t=%v n=%v\n", n, t)
 
   allData := new(DataForCommit)
   allData.CoefficientsAll = make([][]*big.Int, n)
@@ -94,11 +79,11 @@ func GetCommitDataForAllParticipants(curve CurveSystem, threshold int, n int) (*
   // Generate coefficients and public commitments for each participant
   for participant := 0; participant < n; participant++ {
 
-	coefs := make([]*big.Int, threshold+1)
-	commitG1 := make([]Point, threshold+1)
-	commitG2 := make([]Point, threshold+1)
+	coefs := make([]*big.Int, t+1)
+	commitG1 := make([]Point, t+1)
+	commitG2 := make([]Point, t+1)
 	commitPrv := make([]*big.Int, n)
-	for i := 0; i < threshold+1; i++ {
+	for i := 0; i < t+1; i++ {
 	  var err error
 	  coefs[i], commitG1[i], commitG2[i], err = bglswrapper.CoefficientGen(curve)
 	  if err != nil {
@@ -409,10 +394,10 @@ func main() {
 	threshold := toInt(flag.Arg(0))
 	n := toInt(flag.Arg(1))
 	complainerIndex := toInt(flag.Arg(2))
-	accusedIndex := toInt(flag.Arg(3))
+	maliciousIndex := toInt(flag.Arg(3))
 	exportDataFile := flag.Arg(4)
 
-	commitData, err := GetCommitDataForAllParticipantsWithIntentionalErrors(curve, threshold, n, complainerIndex, accusedIndex)
+	commitData, err := GetCommitDataForAllParticipantsWithIntentionalErrors(curve, threshold, n, complainerIndex, maliciousIndex)
 	if err != nil {
 	  fmt.Println("Error in GetCommitDataForAllParticipantsWithIntentionalErrors():", err)
 	}

@@ -33,8 +33,8 @@ function GetCommitDataForAllParticipants(threshold, clientCount, outputPath) {
   return res;
 }
 
-function GetCommitDataForAllParticipantsWithIntentionalErrors(threshold, clientCount, complainerIndex, accusedIndex, outputPath) {
-  const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipantsWithIntentionalErrors ${threshold} ${clientCount} ${complainerIndex} ${accusedIndex} ${outputPath}`;
+function GetCommitDataForAllParticipantsWithIntentionalErrors(threshold, clientCount, complainerIndex, maliciousIndex, outputPath) {
+  const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipantsWithIntentionalErrors ${threshold} ${clientCount} ${complainerIndex} ${maliciousIndex} ${outputPath}`;
 
   logger.info(`Calling external command ${cmd}`);
   const res = runExternal(cmd);

@@ -15,13 +15,15 @@ let DEPOSIT_WEI = 25000000000000000000; // 1e18 * 25
 let THRESHOLD = 14;
 let OUTPUT_PATH = "../commit_data.json";
 let INTERACTIVE = false;
+let COMPLAINER_INDEX = -1; // 1-based
+let MALICIOUS_INDEX = -1;
+let ACCUSED_INDEX = -1; // 1-based
 
 // Constants
 const MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED = 11;
 const CONTRACT_PATH = path.join(__dirname, '../contracts/dkgG2.sol');
 const CONTRACT_NAME = 'dkgG2';
 const CLIENTS = require('../data/accounts');
-// const DKGG2 = artifacts.require('../contracts/dkgG2.sol');
 
 let dkgContract;
 let allCommitDataJson;
@@ -51,11 +53,21 @@ async function main() {
     logger.info('=====> Starting main flow <=====');
     await deployManual();
     await enrollAllClients();
-    getCommitData();
-    await commitAllClients(allCommitDataJson);
-    await phaseChange(CLIENTS[0]);
 
-    // signAndVerify();
+    if (COMPLAINER_INDEX > 0 && MALICIOUS_INDEX > 0 && ACCUSED_INDEX > 0) {
+      logger.info(`Client ${COMPLAINER_INDEX} is complaining about client ${ACCUSED_INDEX}, and the actual culprit is client ${MALICIOUS_INDEX}`);
+      allCommitDataJson = getCommitDataWithErrors(COMPLAINER_INDEX, MALICIOUS_INDEX);
+      await commitAllClients(allCommitDataJson);
+      verifyPrivateCommit(COMPLAINER_INDEX, ACCUSED_INDEX); // TODO   Fill this
+      await sendComplaint(COMPLAINER_INDEX, ACCUSED_INDEX);
+      // signAndVerify();
+    } else {
+      logger.info('No one is complaining so running the contract to completion');
+      allCommitDataJson = getCommitData();
+      await commitAllClients(allCommitDataJson);
+      await phaseChange(CLIENTS[0]);
+    }
+
   } catch (e) {
     console.log(e);
     process.exit(2);
@@ -67,14 +79,9 @@ function processCommandLineArgs(myArgs) {
   THRESHOLD = myArgs.t;
   DEPOSIT_WEI = myArgs.d;
   OUTPUT_PATH = myArgs.j;
-
-  // console.log(JSON.stringify(process.argv));
-  // if (process.argv.length > 2) {
-  //   const myArgs = process.argv.slice(2);
-  //   for (const arg of myArgs) {
-  //     logger.info(`Arg: ${arg}`);
-  //   }
-  // }
+  COMPLAINER_INDEX = myArgs.c;
+  MALICIOUS_INDEX = myArgs.m;
+  ACCUSED_INDEX = myArgs.a;
 }
 
 
@@ -125,24 +132,8 @@ async function enrollAllClients() {
   logger.info('=====> Starting enroll phase <=====');
   let i = 0;
 
-  // Start listening to events before sending the transactions
-  // const events = dkgContract.ParticipantJoined({fromBlock: 0, toBlock: 'latest'});
-  // events.watch((error, result) => {
-  //   logger.info(`watch join(): txHash: ${result.transactionHash} index: ${result.args.index} block: ${result.blockNumber} blockHash: ${result.blockHash}`);
-  //   // logger.info(`watch enroll: ${JSON.stringify(result)}`);
-  //   const client = enrollBlockToClient[result.blockHash];
-  //   if (client) {
-  //     // logger.info(`Get txHash ${result.transactionHash} --> clientAddress ${client.address} --> ${result.args.index}`);
-  //     client.id = result.args.index;
-  //     logger.info(`>>> @ParticipantJoined@ Set ID ${client.id} to client ${client.address}`);
-  //   } else {
-  //     logger.info(`>>> @ParticipantJoined@ Client not found for blockHash ${result.blockHash}`);
-  //   }
-  // });
-
-
   // Send the transactions
-  for(let i=0; i<CLIENT_COUNT; i++) {
+  for (let i = 0; i < CLIENT_COUNT; i++) {
     if (i < 2) {
       pause();
     }
@@ -184,7 +175,6 @@ async function enroll(client, i) {
       }
     });
 
-
     dkgContract.join(
       {
         from: client.address,
@@ -205,33 +195,14 @@ async function enroll(client, i) {
         }
       });
   });
-
-  // client.id = null;
 }
 
 async function commitAllClients(json) {
   logger.info(` =====> Starting commit phase <=====`);
   const {CoefficientsAll, PubCommitG1All, PubCommitG2All, PrvCommitAll} = json;
-
-  // let committed = 0;
-  //
-  // const events = dkgContract.NewCommit({fromBlock: 0, toBlock: 'latest'});
-  // events.watch((error, result) => {
-  //   const client = commitBlockToClient[result.blockHash];
-  //   if (client) {
-  //     logger.debug(`>>> @NewCommit@ Result: ${JSON.stringify(result)}`);
-  //     logger.info(`>>> @NewCommit@ Client ID ${client.id} blockHash: ${result.blockHash}`);
-  //     committed++;
-  //     logger.info(`Client ID #${client.id} ${client.address} committed successfully. Total so far: ${committed}`);
-  //     client.committed = true;
-  //   } else {
-  //     logger.info(`>>> @NewCommit@ Client not found for blockHash: ${result.blockHash}`);
-  //   }
-  // });
-
   logger.info("Notice the difference in gas costs between join() and commit()");
 
-  for(let i=0; i<CLIENT_COUNT; i++) {
+  for (let i = 0; i < CLIENT_COUNT; i++) {
     if (i < 2) {
       pause();
     }
@@ -305,26 +276,6 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
     });
   });
 
-  // Each client saves the pubCommitG1 and pubCommitG2 of ALL clients (save under its sender index),
-  // prCommit[] is an array of bigints (f(i))(2) for all client indexes, but generated with the current client's coeffs.
-
-  // for (let j = 0; j < res.logs.length; j++) {
-  //   var log = res.logs[j];
-  //
-  //   if (log.event === "NewCommit") {
-  //     logger.debug(`Client ID #${client.id} received NewCommit: ${JSON.stringify(log)}`);
-  //     client.committed = true;
-  //     // client.id = log.args.index;
-  //     // logger.info(`Client #${i} received ID [${client.id}] from join()`);
-  //     break;
-  //   }
-  // }
-
-  // if (!client.committed) {
-  //   throw new Error(`Client #${i} ${client.address} - commit() failed!`);
-  // }
-
-  // logger.debug(`Commit(): Client ID #${client.id} ${client.address} committed successfully. Result: ${JSON.stringify(receipt)}`);
 }
 
 function verifyPrivateCommit(complainerIndex, accusedIndex) {
@@ -341,18 +292,20 @@ function verifyPrivateCommit(complainerIndex, accusedIndex) {
 
 function getCommitData() {
   bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT, OUTPUT_PATH);
-  allCommitDataJson = require(OUTPUT_PATH);
+  const data = require(OUTPUT_PATH);
   // printDataPerClient(allCommitDataJson);
   logger.debug('Read contents of file ', OUTPUT_PATH);
   logger.info('Finished generating commitments data.');
   // pause();
+  return data;
 }
 
-function getCommitDataWithErrors(complainerIndex, accusedIndex) {
-  bgls.GetCommitDataForAllParticipantsWithIntentionalErrors(THRESHOLD, CLIENT_COUNT, complainerIndex, accusedIndex, OUTPUT_PATH);
+function getCommitDataWithErrors(complainerIndex, maliciousIndex) {
+  bgls.GetCommitDataForAllParticipantsWithIntentionalErrors(THRESHOLD, CLIENT_COUNT, complainerIndex, maliciousIndex, OUTPUT_PATH);
   logger.info(`Reading data file (with intentional errors) ${OUTPUT_PATH} ...`);
-  allCommitDataJson = require(OUTPUT_PATH);
+  const data = require(OUTPUT_PATH);
   logger.debug('Read contents of file (with intentional errors)', OUTPUT_PATH);
+  return data;
 }
 
 async function sendComplaint(complainerIndex, accusedIndex) {

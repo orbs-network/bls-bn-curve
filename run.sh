@@ -14,6 +14,9 @@ DEPOSIT_WEI=25000000000000000000
 KEEP_GANACHE_ALIVE=false
 DATA_FILE=$(pwd)/commit_data.json
 MNEMONIC="decorate provide ritual swarm will inmate sausage lab banana daring trash liar"
+COMPLAINER_INDEX=-1 # 1-based, the client that complains about client ACCUSED_INDEX
+MALICIOUS_INDEX=-1 # 1-based, the client that actually tainted its data
+ACCUSED_INDEX=-1 # 1-based, the client that is accused by client COMPLAINER_INDEX of tainting its data
 
 while getopts ":n:t:pk" opt; do
   case $opt in
@@ -28,6 +31,14 @@ while getopts ":n:t:pk" opt; do
       ;;
     k)
       KEEP_GANACHE_ALIVE=true
+      ;;
+    c)
+      COMPLAINER_INDEX=$OPTARG
+      ;;
+    m)
+      MALICIOUS_INDEX=$OPTARG
+      ;;
+    a) ACCUSED_INDEX=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -50,7 +61,7 @@ else
 #  account_setup
 fi
 
-node_modules/.bin/truffle exec src/app.js -n ${CLIENT_COUNT} -t ${THRESHOLD} -d ${DEPOSIT_WEI} -j ${DATA_FILE}
+node_modules/.bin/truffle exec src/app.js -n ${CLIENT_COUNT} -t ${THRESHOLD} -d ${DEPOSIT_WEI} -j ${DATA_FILE} -c ${COMPLAINER_INDEX} -m ${MALICIOUS_INDEX} -a ${ACCUSED_INDEX}
 rc=$?
 echo "Finished with rc=$rc"
 if [[ $rc -ne 0 ]] ; then
@@ -61,7 +72,7 @@ if [[ $rc -ne 0 ]] ; then
   exit 1
 fi
 
-./bls-bn-curve -func=SignAndVerify ${THRESHOLD} ${CLIENT_COUNT} ${DATA_FILE}
+#./bls-bn-curve -func=SignAndVerify ${THRESHOLD} ${CLIENT_COUNT} ${DATA_FILE}
 
 
 account_setup() {
