@@ -1,8 +1,8 @@
 const chai = require('chai');
 const dirtyChai = require('dirty-chai');
+const _ = require('lodash');
 const bgls = require('../src/bglswrapper.js');
 const logger = bgls.logger;
-const _ = require('lodash');
 const pause = bgls.pause;
 
 // Run tests:  scripts/test.sh
@@ -25,7 +25,7 @@ const pause = bgls.pause;
 chai.use(dirtyChai);
 
 const ETH_URL = "http://127.0.0.1:7545";
-// const CONTRACT_ADDRESS = '0xF7d58983Dbe1c84E03a789A8A2274118CC29b5da';
+const CONTRACT_ADDRESS = '0xF7d58983Dbe1c84E03a789A8A2274118CC29b5da';
 const Web3 = require('web3');
 
 // See https://github.com/ethereum/web3.js/issues/1119
@@ -39,7 +39,7 @@ const THRESHOLD = 14;
 const DEPOSIT_WEI = 25000000000000000000; // 1e18 * 25
 const MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED = 11;
 
-const CLIENTS = require('../clients.json');
+const CLIENTS = require('../data/accounts.json');
 const gasUsed = {join: 0, commit: 0, phaseChange: 0};
 
 const DKGG2 = artifacts.require('../contracts/dkgG2.sol');
@@ -55,19 +55,35 @@ logger.info('===> Start <===');
 // The done() calls are there because this code is meant to be presented with pauses.
 // Mocha will throw error if idle for 5 minutes and there is no done() callback.
 
+module.exports = function(callback) {
+  main();
+  callback();
+};
+
+async function main() {
+  logger.info('Now running happy flow');
+  await deploy(accounts);
+  await joinAllClients();
+  getCommitData();
+  await commitAllClients(allCommitDataJson);
+  await phaseChange(CLIENTS[0]);
+  signAndVerify();
+
+}
 
 contract('dkgG2', (accounts) => {
 
-  // it('===> Happy flow', async () => {
-  //   logger.info('Now running happy flow');
-  //   await deploy(accounts);
-  //   await joinAllClients();
-  //   getCommitData();
-  //   await commitAllClients(allCommitDataJson);
-  //   await phaseChange(CLIENTS[0]);
-  //   signAndVerify();
-  //   logger.info('Completed happy flow');
-  // });
+  it('Main flow', async () => {
+
+    // main();
+
+    await deploy(accounts);
+  });
+
+  it('===> Happy flow', async () => {
+    await main();
+    logger.info('Completed happy flow');
+  });
 
   it('===> Complaint flow', async () => {
     const COMPLAINER_INDEX = 2;
@@ -75,7 +91,7 @@ contract('dkgG2', (accounts) => {
     logger.info('Now running a flow where one of the clients sends invalid commitments, and another client complains about it');
     await deploy(accounts);
     await joinAllClients();
-    getCommitDataWithErrors(); // taint prv [0][1]
+    getCommitDataWithErrors(COMPLAINER_INDEX, ACCUSED_INDEX); // taint prv [0][1]
     await commitAllClients(allCommitDataJson);
     verifyPrivateCommit(COMPLAINER_INDEX, ACCUSED_INDEX); // TODO   Fill this
     await sendComplaint(COMPLAINER_INDEX, ACCUSED_INDEX);
@@ -97,8 +113,6 @@ async function join(client, i) {
 
     if (log.event === "ParticipantJoined") {
       client.id = log.args.index;
-
-
       break;
     }
   }
@@ -273,8 +287,8 @@ function getCommitData() {
 
 }
 
-function getCommitDataWithErrors() {
-  bgls.GetCommitDataForAllParticipantsWithIntentionalErrors(THRESHOLD, CLIENT_COUNT);
+function getCommitDataWithErrors(complainerIndex, accusedIndex) {
+  bgls.GetCommitDataForAllParticipantsWithIntentionalErrors(THRESHOLD, CLIENT_COUNT, complainerIndex, accusedIndex);
   logger.info(`Reading data file (with intentional errors) ${bgls.OUTPUT_PATH} ...`);
   allCommitDataJson = require(bgls.OUTPUT_PATH);
   logger.debug('Read contents of file (with intentional errors)', bgls.OUTPUT_PATH);
@@ -282,11 +296,14 @@ function getCommitDataWithErrors() {
 
 async function deploy(accounts) {
   dkgContract = await DKGG2.new(THRESHOLD, CLIENT_COUNT, DEPOSIT_WEI);
-  // TODO Use deployed() here?
+
+  //
+
+  // TODO Replace new() with at() to prevent doulbe deployment.
   logger.info(`Deployed DKG contract on address ${dkgContract.address}, txHash: ${dkgContract.transactionHash}`);
   logger.info(`Contract properties: numParticipants=${CLIENT_COUNT}  | threshold=${THRESHOLD} | depositWei=${DEPOSIT_WEI}`);
   // accounts.forEach((a, i) => logger.info(`Account ${i}: ${accounts[i]}`));
-  // await printValuesFromContract();
+  await printValuesFromContract();
   pause();
 }
 
@@ -303,15 +320,8 @@ async function phaseChange(client) {
 
   logger.info(`We will now mine ${MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED} blocks to simulate that no one complained for some time after all commits were executed, therefore it is safe to finalize the commit() phase`);
 
-  // FIXME
-
-  // logger.info('Block number before mining: ', web3.eth.blockNumber);
   pause();
   await mineNBlocks(11);
-
-  // FIXME
-
-  // logger.info('Block number after mining: ', web3.eth.blockNumber);
   logger.info(`No one complained, so calling phaseChange() to finalize commit phase. `);
   logger.info(`Take note of the present balance of accounts and compare to after calling phaseChange().`);
   pause();
@@ -379,6 +389,8 @@ async function printValuesFromContract() {
   // logger.debug("Get g2");
   // valuesFromContract.g2 = await dkgContract.g2.call();
   logger.info(`Reading values directly from contract: ${JSON.stringify(valuesFromContract)}`);
+  logger.info(`Reading values directly from contract: ${valuesFromContract.n.toString()}`);
+  logger.info(`Reading values directly from contract: ${valuesFromContract.t.toString()}`);
   logger.info(`Reading values directly from contract: ${valuesFromContract.p.toString()}`);
   logger.info(`Reading values directly from contract: ${valuesFromContract.q.toString()}`);
 

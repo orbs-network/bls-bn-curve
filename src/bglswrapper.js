@@ -1,11 +1,10 @@
 const {execSync} = require('child_process');
 const CWD = __dirname;
 const EXEC_PATH = `${CWD}/../bls-bn-curve`;
-const OUTPUT_PATH = `${CWD}/../commit_data.json`;
-const readlineSync = require('readline-sync');
+// const OUTPUT_PATH = `${CWD}/../commit_data.json`;
 const {createLogger, format, transports} = require('winston');
 
-const INTERACTIVE = true;
+
 const SHOW_DEBUG = false;
 
 const logger = createLogger({
@@ -19,44 +18,36 @@ const logger = createLogger({
   ]
 });
 
-function pause() {
-  if (INTERACTIVE) {
-    readlineSync.keyInPause();
-  }
-}
 
 function runExternal(cmd) {
   return execSync(cmd, {cwd: CWD}, {stdio: [0, 1, 2]});
 }
 
-function GetCommitDataForAllParticipants(threshold, clientCount) {
-  const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipants ${threshold} ${clientCount} ${OUTPUT_PATH}`;
+function GetCommitDataForAllParticipants(threshold, clientCount, outputPath) {
+  const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipants ${threshold} ${clientCount} ${outputPath}`;
 
   logger.info(`Calling external command ${cmd}`);
-  pause();
   const res = runExternal(cmd);
-  const json = require(OUTPUT_PATH);
+  const json = require(outputPath);
   logger.debug(`GetCommitDataForAllParticipants(): Read data from file: ${JSON.stringify(json)}`);
   return res;
 }
 
-function GetCommitDataForAllParticipantsWithIntentionalErrors(threshold, clientCount) {
-  const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipantsWithIntentionalErrors ${threshold} ${clientCount} ${OUTPUT_PATH}`;
+function GetCommitDataForAllParticipantsWithIntentionalErrors(threshold, clientCount, complainerIndex, accusedIndex, outputPath) {
+  const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipantsWithIntentionalErrors ${threshold} ${clientCount} ${complainerIndex} ${accusedIndex} ${outputPath}`;
 
   logger.info(`Calling external command ${cmd}`);
-  pause();
   const res = runExternal(cmd);
-  const json = require(OUTPUT_PATH);
+  const json = require(outputPath);
   logger.debug(`GetCommitDataForAllParticipantsWithIntentionalErrors(): Read data from file: ${JSON.stringify(json)}`);
   return res;
 }
 
-function VerifyPrivateCommitment(complainerIndex, accusedIndex) {
-  const cmd = `${EXEC_PATH} -func=VerifyPrivateCommitment ${complainerIndex} ${accusedIndex} ${OUTPUT_PATH}`;
+function VerifyPrivateCommitment(complainerIndex, accusedIndex, outputPath) {
+  const cmd = `${EXEC_PATH} -func=VerifyPrivateCommitment ${complainerIndex} ${accusedIndex} ${outputPath}`;
   logger.info(`Calling external command ${cmd}`);
-  pause();
   const buf = runExternal(cmd);
-  // const json = require(OUTPUT_PATH);
+  // const json = require(outputPath);
   logger.debug(`VerifyPrivateCommitment(): Returned buffer: ${buf}`);
   return buf;
 }
@@ -77,9 +68,9 @@ function VerifyPrivateCommitment(complainerIndex, accusedIndex) {
 // SHOW THAT BOTH SIGS ARE THE SAME AND WE ARE DONE!
 
 
-function SignAndVerify(threshold, clientCount) {
-  // const json = require(OUTPUT_PATH);
-  const cmd = `${EXEC_PATH} -func=SignAndVerify ${threshold} ${clientCount} ${OUTPUT_PATH}`;
+function SignAndVerify(threshold, clientCount, outputPath) {
+  // const json = require(outputPath);
+  const cmd = `${EXEC_PATH} -func=SignAndVerify ${threshold} ${clientCount} ${outputPath}`;
   logger.info(`Calling external command ${cmd}`);
   const stdoutBuffer = execSync(cmd, {cwd: CWD});
   logger.debug(stdoutBuffer.toString());
@@ -92,7 +83,5 @@ module.exports = {
   GetCommitDataForAllParticipantsWithIntentionalErrors: GetCommitDataForAllParticipantsWithIntentionalErrors,
   SignAndVerify: SignAndVerify,
   VerifyPrivateCommitment: VerifyPrivateCommitment,
-  logger: logger,
-  pause: pause,
-  OUTPUT_PATH: OUTPUT_PATH
+  logger: logger
 };

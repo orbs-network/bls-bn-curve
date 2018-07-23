@@ -58,21 +58,24 @@ func getPrCommit() {
 
 }
 
-func GetCommitDataForAllParticipantsWithIntentionalErrors(curve CurveSystem, threshold int, n int) (*DataForCommit, error) {
+func GetCommitDataForAllParticipantsWithIntentionalErrors(curve CurveSystem, threshold int, n int, complainerIndex int, accusedIndex int) (*DataForCommit, error) {
 
   data, _ := GetCommitDataForAllParticipants(curve, threshold, n);
-  data = taintData(data)
+  data = taintData(data, complainerIndex, accusedIndex)
 
   return data, nil
 }
 
-func taintData(data *DataForCommit) *DataForCommit {
-  fmt.Printf("Original value (before taint): %x\n", data.PrvCommitAll[0][1])
-  data.PrvCommitAll[0][1].Add(data.PrvCommitAll[0][1], big.NewInt(1))
-  fmt.Printf("Tainted value %x\n", data.PrvCommitAll[0][1])
+func taintData(data *DataForCommit, complainerIndex int, accusedIndex int) *DataForCommit {
+  fmt.Printf("Original value (before taint): %x\n", data.PrvCommitAll[accusedIndex][complainerIndex])
+  data.PrvCommitAll[accusedIndex][complainerIndex].Add(data.PrvCommitAll[accusedIndex][complainerIndex], big.NewInt(1))
+  fmt.Printf("Tainted value %x\n", data.PrvCommitAll[accusedIndex][complainerIndex])
   fmt.Println()
   return data
 }
+
+// Generate data for commitment:
+// Polynomial coefficients
 
 func GetCommitDataForAllParticipants(curve CurveSystem, threshold int, n int) (*DataForCommit, error) {
 
@@ -258,12 +261,12 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 
   // These are 1-based (not 0-based)
   subIndices := [][]int{
-	{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	{1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 20, 18, 16, 14},
-	//{3, 4, 5},
-	//{2, 4, 5},
-	//{1, 3, 5},
+	//{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	//{1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	//{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 20, 18, 16, 14},
+	{3, 4, 5},
+	{2, 4, 5},
+	{1, 3, 5},
   }
 
   for i := 0; i < len(subIndices); i++ {
@@ -405,9 +408,11 @@ func main() {
 	fmt.Println("--- GetCommitDataForAllParticipantsWithIntentionalErrors ---")
 	threshold := toInt(flag.Arg(0))
 	n := toInt(flag.Arg(1))
-	exportDataFile := flag.Arg(2)
+	complainerIndex := toInt(flag.Arg(2))
+	accusedIndex := toInt(flag.Arg(3))
+	exportDataFile := flag.Arg(4)
 
-	commitData, err := GetCommitDataForAllParticipantsWithIntentionalErrors(curve, threshold, n)
+	commitData, err := GetCommitDataForAllParticipantsWithIntentionalErrors(curve, threshold, n, complainerIndex, accusedIndex)
 	if err != nil {
 	  fmt.Println("Error in GetCommitDataForAllParticipantsWithIntentionalErrors():", err)
 	}
@@ -700,7 +705,7 @@ func Init() {
   flag.StringVar(&cmd, "func", "", "Name of function")
   flag.Parse()
 
-  fmt.Println("-- BGLSMAIN.GO -- ")
+  //fmt.Println("-- BGLSMAIN.GO -- ")
 
 }
 

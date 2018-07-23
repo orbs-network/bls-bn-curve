@@ -37,3 +37,4 @@ cleanup() {
     kill -9 $ganache_pid
   fi
 }
+
