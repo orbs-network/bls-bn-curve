@@ -14,9 +14,9 @@ DEPOSIT_WEI=25000000000000000000
 KEEP_GANACHE_ALIVE=false
 DATA_FILE=$(pwd)/commit_data.json
 MNEMONIC="decorate provide ritual swarm will inmate sausage lab banana daring trash liar"
-COMPLAINER_INDEX=-1 # 1-based, the client that complains about client ACCUSED_INDEX
-MALICIOUS_INDEX=-1 # 1-based, the client that actually tainted its data
-ACCUSED_INDEX=-1 # 1-based, the client that is accused by client COMPLAINER_INDEX of tainting its data
+COMPLAINER_INDEX=0 # 1-based, the client that complains about client ACCUSED_INDEX
+MALICIOUS_INDEX=0 # 1-based, the client that actually tainted its data
+ACCUSED_INDEX=0 # 1-based, the client that is accused by client COMPLAINER_INDEX of tainting its data
 
 while getopts ":n:t:pk" opt; do
   case $opt in
@@ -61,7 +61,10 @@ else
 #  account_setup
 fi
 
-node_modules/.bin/truffle exec src/app.js -n ${CLIENT_COUNT} -t ${THRESHOLD} -d ${DEPOSIT_WEI} -j ${DATA_FILE} -c ${COMPLAINER_INDEX} -m ${MALICIOUS_INDEX} -a ${ACCUSED_INDEX}
+cmd="node_modules/.bin/truffle exec src/app.js -n ${CLIENT_COUNT} -t ${THRESHOLD} -d ${DEPOSIT_WEI} -j ${DATA_FILE} -c ${COMPLAINER_INDEX} -m ${MALICIOUS_INDEX} -a ${ACCUSED_INDEX}"
+echo "Running command: ${cmd}"
+${cmd}
+
 rc=$?
 echo "Finished with rc=$rc"
 if [[ $rc -ne 0 ]] ; then

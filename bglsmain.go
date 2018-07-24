@@ -3,13 +3,13 @@ package main
 import (
   "flag"
   "fmt"
-  . "github.com/Project-Arda/bgls/curves"
   "math/big"
   "strconv"
   "strings"
   "encoding/json"
-  "github.com/orbs-network/bls-bn-curve/bglswrapper"
-  "github.com/Project-Arda/bgls/bgls"
+  "github.com/orbs-network/bgls/dkg"
+  "github.com/orbs-network/bgls/bgls"
+  . "github.com/orbs-network/bgls/curves"
   "os"
   "io/ioutil"
   "bufio"
@@ -21,15 +21,29 @@ import (
 var cmd string
 
 const INTERACTIVE = true
+const BigintAsStrBase = 16 // All bigints as strings are in hex
 
-type DataForCommit struct {
+type KeyPair struct {
+  SK string `json:"sk"`
+  PK []string `json:"pk"`
+}
+
+
+type AllDataForCommit struct {
   CoefficientsAll [][]*big.Int
   PubCommitG1All  [][]Point
   PubCommitG2All  [][]Point
   PrvCommitAll    [][]*big.Int
 }
 
-type JsonDataForCommit struct {
+type DataForCommit struct {
+  Coefficients []*big.Int
+  PubCommitG1  []Point
+  PubCommitG2  []Point
+  PrvCommit    []*big.Int
+}
+
+type JsonAllDataForCommit struct {
   CoefficientsAll [][]string
   PubCommitG1All  [][][]string
   PubCommitG2All  [][][]string
@@ -41,32 +55,55 @@ type JsonDataForCommit struct {
 // func (g1Point *altbn128Point2) ToAffineCoords() []*big.Int
 // func (curve *altbn128) MakeG2Point(coords []*big.Int, check bool) (Point, bool)
 
-func GetCommitDataForAllParticipantsWithIntentionalErrors(curve CurveSystem, threshold int, n int, complainerIndex int, maliciousIndex int) (*DataForCommit, error) {
-
-  data, _ := GetCommitDataForAllParticipants(curve, threshold, n)
-  data = taintData(data, complainerIndex, maliciousIndex)
-
-  return data, nil
-}
-
-func taintData(data *DataForCommit, complainerIndex int, maliciousIndex int) *DataForCommit {
-  fmt.Printf("Original value (before taint): %x\n", data.PrvCommitAll[maliciousIndex][complainerIndex])
-  data.PrvCommitAll[maliciousIndex][complainerIndex].Add(data.PrvCommitAll[maliciousIndex][complainerIndex], big.NewInt(1))
-  fmt.Printf("Tainted value %x\n", data.PrvCommitAll[maliciousIndex][complainerIndex])
-  fmt.Println()
-  return data
-}
-
 // Data for commitment:
 // Generate t+1 random coefficients from (mod p) field for the polynomial
 // Generate public commitments
 // Generate private commitments
 
-func GetCommitDataForAllParticipants(curve CurveSystem, t int, n int) (*DataForCommit, error) {
+// index is 1-based
+func GetCommitDataForSingleParticipant(curve CurveSystem, index int, t int, n int, mySK *big.Int, pks []Point) (*DataForCommit, error) {
+  data := DataForCommit{
+	Coefficients: make([]*big.Int, t+1),
+	PubCommitG1:  make([]Point, t+1),
+	PubCommitG2:  make([]Point, t+1),
+	PrvCommit:    make([]*big.Int, n),
+  }
+
+  for i := 0; i < t+1; i++ {
+	var err error
+	data.Coefficients[i], data.PubCommitG1[i], data.PubCommitG2[i], err = dkg.CoefficientGen(curve)
+	if err != nil {
+	  return nil, err
+	}
+	verifyResult := dkg.VerifyPublicCommitment(curve, data.PubCommitG1[i], data.PubCommitG2[i])
+	if !verifyResult {
+	  return nil, fmt.Errorf("VerifyPublicCommitment() failed for (participant=%v i=%v)", index, i)
+	}
+	//fmt.Printf("PASSED VerifyPublicCommitment() (index=%v i=%v)\n", index, i)
+  }
+
+  j := big.NewInt(1)
+  for i := 0; i < n; i++ {
+	if i == index-1 {
+	  data.PrvCommit[i] = big.NewInt(0) // Don't calculate private commitment from me to myself
+	} else {
+	  plainPrvCommit := dkg.GetPrivateCommitment(curve, j, data.Coefficients)
+	  //fmt.Printf("Calling Encrypt() with sk=%v pks[%v]=%v\n", mySK, i, pks[i].ToAffineCoords(), )
+	  data.PrvCommit[i] = dkg.Encrypt(curve, mySK, pks[i], plainPrvCommit)
+	  //fmt.Printf("Encrypt() result: %v\n", data.PrvCommit[i])
+	}
+	j.Add(j, big.NewInt(1))
+  }
+
+  return &data, nil
+}
+
+/*
+func GetCommitDataForAllParticipants(curve CurveSystem, t int, n int) (*AllDataForCommit, error) {
 
   fmt.Printf("GetCommitDataForAllParticipants() called with t=%v n=%v\n", n, t)
 
-  allData := new(DataForCommit)
+  allData := new(AllDataForCommit)
   allData.CoefficientsAll = make([][]*big.Int, n)
   allData.PubCommitG1All = make([][]Point, n)
   allData.PubCommitG2All = make([][]Point, n)
@@ -79,17 +116,18 @@ func GetCommitDataForAllParticipants(curve CurveSystem, t int, n int) (*DataForC
   // Generate coefficients and public commitments for each participant
   for participant := 0; participant < n; participant++ {
 
+
 	coefs := make([]*big.Int, t+1)
 	commitG1 := make([]Point, t+1)
 	commitG2 := make([]Point, t+1)
 	commitPrv := make([]*big.Int, n)
 	for i := 0; i < t+1; i++ {
 	  var err error
-	  coefs[i], commitG1[i], commitG2[i], err = bglswrapper.CoefficientGen(curve)
+	  coefs[i], commitG1[i], commitG2[i], err = dkg.CoefficientGen(curve)
 	  if err != nil {
 		return allData, err
 	  }
-	  verifyResult := bglswrapper.VerifyPublicCommitment(curve, commitG1[i], commitG2[i])
+	  verifyResult := dkg.VerifyPublicCommitment(curve, commitG1[i], commitG2[i])
 	  if !verifyResult {
 		return nil, fmt.Errorf("VerifyPublicCommitment() failed for (participant=%v i=%v)", participant, i)
 	  }
@@ -98,9 +136,13 @@ func GetCommitDataForAllParticipants(curve CurveSystem, t int, n int) (*DataForC
 
 	j := big.NewInt(1)
 	for i := 0; i < n; i++ {
-	  commitPrv[i] = bglswrapper.GetPrivateCommitment(curve, j, coefs)
+	  if i == participant {
+		commitPrv[i] = big.NewInt(0) // Don't calculate private commitment from me to myself
+	  } else {
+		plainPrvCommit := dkg.GetPrivateCommitment(curve, j, coefs)
+		commitPrv[i] = dkg.Encrypt(curve, SK, PK, plainPrvCommit)
+	  }
 
-	  // FIXME WEIRD!!!
 
 	  //prv := commitPrv[i]
 	  //pub := commitG1[i]
@@ -118,32 +160,53 @@ func GetCommitDataForAllParticipants(curve CurveSystem, t int, n int) (*DataForC
 
   return allData, nil
 }
+*/
 
-// This is for the Complaint flow only - don't call it for now
-func VerifyPrivateCommitment(curve CurveSystem, threshold int, n int, data *DataForCommit) (bool, error) {
+/*
+func GetCommitDataForAllParticipantsWithIntentionalErrors(curve CurveSystem, threshold int, n int, complainerIndex int, maliciousIndex int) (*AllDataForCommit, error) {
 
-  // == Verify phase ==
+  data, _ := GetCommitDataForAllParticipants(curve, threshold, n)
+  data = taintData(data, complainerIndex, maliciousIndex)
 
-  j := big.NewInt(1)
-  for participant := 0; participant < n; participant++ {
-	for commitParticipant := 0; commitParticipant < n; commitParticipant++ {
-	  prv := data.PrvCommitAll[commitParticipant][participant]
-	  pub := data.PubCommitG1All[commitParticipant]
-	  if res := bglswrapper.VerifyPrivateCommitment(curve, j, prv, pub); !res {
-		return false, fmt.Errorf("private commit doesn't match public commit")
-	  }
-	}
-	j.Add(j, big.NewInt(1))
-  }
-
-  return true, nil
-
+  return data, nil
 }
 
-func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit) (bool, error) {
+
+func taintData(data *AllDataForCommit, complainerIndex int, maliciousIndex int) *AllDataForCommit {
+  fmt.Printf("Original value (before taint): %x\n", data.PrvCommitAll[maliciousIndex][complainerIndex])
+  data.PrvCommitAll[maliciousIndex][complainerIndex].Add(data.PrvCommitAll[maliciousIndex][complainerIndex], big.NewInt(1))
+  fmt.Printf("Tainted value %x\n", data.PrvCommitAll[maliciousIndex][complainerIndex])
+  fmt.Println()
+  return data
+}
+
+*/
+
+// This is for the Complaint flow only - don't call it for now
+//func VerifyPrivateCommitment(curve CurveSystem, threshold int, n int, data *AllDataForCommit) (bool, error) {
+//
+//  // == Verify phase ==
+//
+//  j := big.NewInt(1)
+//  for participant := 0; participant < n; participant++ {
+//	for commitParticipant := 0; commitParticipant < n; commitParticipant++ {
+//	  prv := data.PrvCommitAll[commitParticipant][participant]
+//	  pub := data.PubCommitG1All[commitParticipant]
+//	  if res := dkg.VerifyPrivateCommitment(curve, j, prv, pub); !res {
+//		return false, fmt.Errorf("private commit doesn't match public commit")
+//	  }
+//	}
+//	j.Add(j, big.NewInt(1))
+//  }
+//
+//  return true, nil
+//
+//}
+
+func SignAndVerify(curve CurveSystem, threshold int, n int, data *AllDataForCommit) (bool, error) {
 
   // == Calculate SK, Pks and group PK ==
-  // TODO Should be happen only once, after DKG flow is done, and not for every SignAndVerify()
+  // Should be happen only once, after DKG flow is done, and not for every SignAndVerify()
 
   fmt.Println()
   fmt.Printf("Starting SignAndVerify with threshold=%v n=%v\n", threshold, n)
@@ -154,13 +217,13 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   pkAll := make([][]Point, n)
   pubCommitG2Zero := make([]Point, n)
   for participant := 0; participant < n; participant++ {
-	pkAll[participant] = bglswrapper.GetAllPublicKey(curve, threshold, data.PubCommitG2All)
+	pkAll[participant] = dkg.GetAllPublicKey(curve, threshold, data.PubCommitG2All)
 	pubCommitG2Zero[participant] = data.PubCommitG2All[participant][0]
 	prvCommit := make([]*big.Int, n)
 	for commitParticipant := 0; commitParticipant < n; commitParticipant++ {
 	  prvCommit[commitParticipant] = data.PrvCommitAll[commitParticipant][participant]
 	}
-	skAll[participant] = bglswrapper.GetSecretKey(prvCommit)
+	skAll[participant] = dkg.GetSecretKey(prvCommit)
   }
 
   fmt.Println("Completed one-time calculation of SK, PK and Commitments")
@@ -170,49 +233,18 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   }
   fmt.Println()
 
-  //pkOk := true
-
-  ////Verify pkAll are the same for all
-  //for participant := 0; participant < n; participant++ {
-  //pks := pkAll[participant]
-  //for otherParticipant := 0; otherParticipant < n; otherParticipant++ {
-  //  if pks[participant] != pkAll[otherParticipant][participant] {
-  //	pkOk = false
-  //	fmt.Println("pk for the same participant is different among other participants")
-  //  }
-  //}
-  //}
-  //
-  //if !pkOk {
-  //return false, fmt.Errorf("failed PK verification")
-  //}
-  //
-
   fmt.Println("Public Key shares - same values are calculated by each client")
   fmt.Println()
   for i, pkShare := range pkAll[0] {
 	fmt.Printf("PK share [%v]: %v\n", i, pointToHexCoords(pkShare))
   }
 
-  groupPk := bglswrapper.GetGroupPublicKey(curve, pubCommitG2Zero)
+  groupPk := dkg.GetGroupPublicKey(curve, pubCommitG2Zero)
 
   fmt.Printf("Group PK: %v\n", pointToHexCoords(groupPk))
 
-  //Verify the secret key matches the public key
-
-  //coefsZero := make([]*big.Int, n)
-  //for participant := 0; participant < n; participant++ {
-  //coefsZero[participant] = data.CoefficientsAll[participant][0]
-  //}
-
-  //groupSk := bglswrapper.GetPrivateCommitment(curve, big.NewInt(1), coefsZero)
-  //if groupPk != bgls.LoadPublicKey(curve, groupSk) {
-  //return false, fmt.Errorf("groupPK doesnt match to groupSK")
-  //}
-
   // == Sign and reconstruct ==
 
-  //d := make([]byte, 64)
   var msg string
   if INTERACTIVE {
 	msg = readFromStdin("*** Enter message: ")
@@ -223,7 +255,7 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
   fmt.Println()
   fmt.Printf("Message for signature verification: %v\n", msg)
   msgBytes := []byte(msg)
-  fmt.Printf("Message bytes: %v\n", msgBytes);
+  fmt.Printf("Message bytes: %v\n", msgBytes)
   sigs := make([]Point, n)
 
   // For each participant, generate signature with its SK
@@ -256,9 +288,9 @@ func SignAndVerify(curve CurveSystem, threshold int, n int, data *DataForCommit)
 
   for i := 0; i < len(subIndices); i++ {
 	fmt.Println()
-    fmt.Printf("=====> verifySigOnSubset() subIndices #%v <=====\n", subIndices[i])
-    readFromStdin("")
-    _, err := verifySigOnSubset(curve, indices, sigs, groupPk, msgBytes, subIndices[i])
+	fmt.Printf("=====> verifySigOnSubset() subIndices #%v <=====\n", subIndices[i])
+	readFromStdin("")
+	_, err := verifySigOnSubset(curve, indices, sigs, groupPk, msgBytes, subIndices[i])
 	if err != nil {
 	  fmt.Printf("Error in subgroup %v: %v", subIndices[i], err)
 	  return false, err
@@ -288,7 +320,7 @@ func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, grou
   //for i, subSig := range subSigs {
   //fmt.Printf("Signature Share %v: %v\n", subIndicesBigInt[i], pointToHexCoords(subSig))
   //}
-  groupSig1, err := bglswrapper.SignatureReconstruction(
+  groupSig1, err := dkg.SignatureReconstruction(
 	curve, subSigs, subIndicesBigInt)
   if err != nil {
 	return false, fmt.Errorf("group signature reconstruction failed")
@@ -349,72 +381,105 @@ func main() {
 
   case "VerifyPrivateCommitment":
 	// func VerifyPrivateCommitment(curve CurveSystem, myIndex *big.Int, prvCommit *big.Int, pubCommitG1 []Point) bool {
-	myIndex, _ := strconv.Atoi(flag.Args()[0])        // 2   1-based
-	prvCommitIndex, _ := strconv.Atoi(flag.Args()[1]) // 1   1-based
-	dataFile := flag.Arg(2)
-	data, err := readDataFile(dataFile, curve)
-	if err != nil {
-	  fmt.Println("Error in VerifyPrivateCommitment():", err)
-	  return
-	}
-
-	pubCommitG1 := data.PubCommitG1All[prvCommitIndex-1]
-	prvCommit := data.PrvCommitAll[prvCommitIndex-1][myIndex-1]
+	myIndex, _ := strconv.Atoi(flag.Args()[0])                           // 2   1-based
+	prvCommit, _ := new(big.Int).SetString(flag.Arg(1), 0)
+	pubCommitG1 := strToG1s(curve, flag.Arg(2))
 	// prvCommit is prvCommitAll[0][1] - this is what client 0 has commited to client 1
 	// pubCommitG1 [0] - this is all of client 0 public commitments over G1
-	boolRes := bglswrapper.VerifyPrivateCommitment(curve, big.NewInt(int64(myIndex)), prvCommit, pubCommitG1)
-	fmt.Printf("%v\n", boolToStr(boolRes))
+	boolRes := dkg.VerifyPrivateCommitment(curve, big.NewInt(int64(myIndex)), prvCommit, pubCommitG1)
+	res := fmt.Sprintf("%v\n", boolToStr(boolRes))
+	fmt.Println(res)
 
-  case "GetCommitDataForAllParticipants":
-	fmt.Println("--- GetCommitDataForAllParticipants ---")
-	threshold := toInt(flag.Arg(0))
-	n := toInt(flag.Arg(1))
-	exportDataFile := flag.Arg(2)
+  case "GetCommitDataForSingleParticipant":
+	myIndex, _ := strconv.Atoi(flag.Args()[0])
+	threshold := toInt(flag.Arg(1))
+	n := toInt(flag.Arg(2))
+	sk, _ := new(big.Int).SetString(flag.Arg(3), 0)
+	pks := strToG1s(curve, flag.Arg(4))
 
-	commitData, err := GetCommitDataForAllParticipants(curve, threshold, n)
-	if err != nil {
-	  fmt.Println("Error in GetCommitDataForallParticipants():", err)
-	}
-	json, err := marshal(commitData)
-	if err != nil {
-	  fmt.Println("Error marshalling commit data", err)
-	}
-	os.Stdout.Write(json)
-	err = ioutil.WriteFile(exportDataFile, json, 0644)
-	if err != nil {
-	  panic(err)
-	}
-	//err = writeGob("./data.gob", commitData)
+	dataForCommit, err := GetCommitDataForSingleParticipant(curve, myIndex, threshold, n, sk, pks)
 	if err != nil {
 	  panic(err)
 	}
 
-  case "GetCommitDataForAllParticipantsWithIntentionalErrors":
-	fmt.Println("--- GetCommitDataForAllParticipantsWithIntentionalErrors ---")
-	threshold := toInt(flag.Arg(0))
-	n := toInt(flag.Arg(1))
-	complainerIndex := toInt(flag.Arg(2))
-	maliciousIndex := toInt(flag.Arg(3))
-	exportDataFile := flag.Arg(4)
+	// TODO Add marshalling for point - maybe add new type like in JsonAllDataForCommit
 
-	commitData, err := GetCommitDataForAllParticipantsWithIntentionalErrors(curve, threshold, n, complainerIndex, maliciousIndex)
-	if err != nil {
-	  fmt.Println("Error in GetCommitDataForAllParticipantsWithIntentionalErrors():", err)
-	}
-	json, err := marshal(commitData)
-	if err != nil {
-	  fmt.Println("Error marshalling commit data", err)
-	}
-	os.Stdout.Write(json)
-	err = ioutil.WriteFile(exportDataFile, json, 0644)
-	if err != nil {
-	  panic(err)
-	}
-	//err = writeGob("./data.gob", commitData)
-	if err != nil {
-	  panic(err)
-	}
+    json, err := json.Marshal(dataForCommit)
+    if err != nil {
+	  fmt.Println("Error: ", err)
+    }
+    fmt.Printf("%v\n", string(json))
 
+	/*
+			case "VerifyPrivateCommitment__":
+				// func VerifyPrivateCommitment(curve CurveSystem, myIndex *big.Int, prvCommit *big.Int, pubCommitG1 []Point) bool {
+				myIndex, _ := strconv.Atoi(flag.Args()[0])        // 2   1-based
+				prvCommitIndex, _ := strconv.Atoi(flag.Args()[1]) // 1   1-based
+				dataFile := flag.Arg(2)
+				data, err := readDataFile(dataFile, curve)
+				if err != nil {
+				fmt.Println("Error in VerifyPrivateCommitment():", err)
+				}
+
+				pubCommitG1 := data.PubCommitG1All[prvCommitIndex-1]
+				prvCommit := data.PrvCommitAll[prvCommitIndex-1][myIndex-1]
+				// prvCommit is prvCommitAll[0][1] - this is what client 0 has commited to client 1
+				// pubCommitG1 [0] - this is all of client 0 public commitments over G1
+				boolRes := dkg.VerifyPrivateCommitment(curve, big.NewInt(int64(myIndex)), prvCommit, pubCommitG1)
+				res := fmt.Sprintf("%v\n", boolToStr(boolRes))
+				fmt.Println(res)
+		*/
+	/*
+			case "GetCommitDataForAllParticipants":
+			fmt.Println("--- GetCommitDataForAllParticipants ---")
+			threshold := toInt(flag.Arg(0))
+			n := toInt(flag.Arg(1))
+			exportDataFile := flag.Arg(2)
+
+			commitData, err := GetCommitDataForAllParticipants(curve, threshold, n)
+			if err != nil {
+				fmt.Println("Error in GetCommitDataForallParticipants():", err)
+			}
+			json, err := marshal(commitData)
+			if err != nil {
+				fmt.Println("Error marshalling commit data", err)
+			}
+			os.Stdout.Write(json)
+			err = ioutil.WriteFile(exportDataFile, json, 0644)
+			if err != nil {
+				panic(err)
+			}
+			//err = writeGob("./data.gob", commitData)
+			if err != nil {
+				panic(err)
+			}
+
+			case "GetCommitDataForAllParticipantsWithIntentionalErrors":
+			fmt.Println("--- GetCommitDataForAllParticipantsWithIntentionalErrors ---")
+			threshold := toInt(flag.Arg(0))
+			n := toInt(flag.Arg(1))
+			complainerIndex := toInt(flag.Arg(2))
+			maliciousIndex := toInt(flag.Arg(3))
+			exportDataFile := flag.Arg(4)
+
+			commitData, err := GetCommitDataForAllParticipantsWithIntentionalErrors(curve, threshold, n, complainerIndex, maliciousIndex)
+			if err != nil {
+				fmt.Println("Error in GetCommitDataForAllParticipantsWithIntentionalErrors():", err)
+			}
+			json, err := marshal(commitData)
+			if err != nil {
+				fmt.Println("Error marshalling commit data", err)
+			}
+			os.Stdout.Write(json)
+			err = ioutil.WriteFile(exportDataFile, json, 0644)
+			if err != nil {
+				panic(err)
+			}
+			//err = writeGob("./data.gob", commitData)
+			if err != nil {
+				panic(err)
+			}
+		*/
   case "SignAndVerify":
 	fmt.Println("--- SignAndVerify ---")
 	threshold := toInt(flag.Arg(0))
@@ -423,38 +488,34 @@ func main() {
 	data, err := readDataFile(dataFile, curve)
 	isOk, err := SignAndVerify(curve, threshold, n, data)
 	if err != nil {
-	  fmt.Println("Error in SignAndVerify():", err)
-	  return
+	  res := fmt.Sprintf("Error in SignAndVerify(): %v", err)
+	  fmt.Println(res)
 	}
 	fmt.Printf("SignAndVerify() ok? %v\n", isOk)
 
-	/*
-	case "GetDataForCommit":
-	threshold := toInt(flag.Args()[0])
-	clientCount := toInt(flag.Args()[1])
-	res := GetDataForCommit(curve, threshold, clientCount)
-	json, err := json.Marshal(res)
-	if err != nil {
-		fmt.Println("Error in json:", err)
-	}
-	//fmt.Printf("%T %v\n", res, res)
-	fmt.Printf("%v", string(json))
+  case "GenerateKeyPair":
+	sk, pk, _, _ := dkg.CoefficientGen(curve)
+    keyPair := KeyPair{bigIntToHexStr(sk), pointToStrArray(pk)}
+    //keyPairJson, _ := keyPair.Marshal()
+    //fmt.Println(keyPair)
+    json, err := json.Marshal(keyPair)
+    if err != nil {
+      fmt.Println("Error: ", err)
+    }
+    fmt.Printf("%v\n", string(json))
 
-	case "CoefficientGen":
-	// func CoefficientGen(curve CurveSystem) (*big.Int, Point, Point, error) {
-	x, g1commit, g2commit, error := dkg.CoefficientGen(curve)
-	fmt.Printf("%v %v %v %v\n", bigIntToStr(x), pointToStr(g1commit), pointToStr(g2commit), error)
+	/*
 	case "LoadPublicKeyG1":
-	// func LoadPublicKeyG1(curve CurveSystem, sk *big.Int) Point {
-	sk := toBigInt(flag.Args()[0])
-	point := dkg.LoadPublicKeyG1(curve, sk)
+	// func LoadPublicKeyG1(curve CurveSystem, SK *big.Int) Point {
+	SK := toBigInt(flag.Args()[0])
+	point := dkg.LoadPublicKeyG1(curve, SK)
 	fmt.Printf("%v\n", pointToStr(point))
 	case "GetPrivateCommitment":
 	// func GetPrivateCommitment(curve CurveSystem, ind *big.Int, coefficients []*big.Int) *big.Int {
 	ind := toBigInt(flag.Args()[0])
 	coefficients := toBigInts(flag.Args()[1:])
 	bigInt := dkg.GetPrivateCommitment(curve, ind, coefficients)
-	fmt.Printf("%v\n", bigIntToStr(bigInt))
+	fmt.Printf("%v\n", bigIntToHexStr(bigInt))
 	case "GetGroupPublicKey":
 	// func GetGroupPublicKey(curve CurveSystem, pubCommitG2 []Point) Point {
 	pubCommitG2 := toPoints(flag.Args())
@@ -477,7 +538,7 @@ func main() {
 	// func GetSecretKey(prvCommits []*big.Int) *big.Int {
 	prvCommits := toBigInts(flag.Args())
 	bigInt := dkg.GetSecretKey(prvCommits)
-	fmt.Printf("%v\n", bigIntToStr(bigInt))
+	fmt.Printf("%v\n", bigIntToHexStr(bigInt))
 	case "GetSpecificPublicKey":
 	// func GetSpecificPublicKey(curve CurveSystem, index *big.Int, threshold int, pubCommitG2 []Point) Point {
 	index := toBigInt(flag.Args()[0])
@@ -506,7 +567,42 @@ func main() {
 
 }
 
-func readDataFile(dataFile string, curve CurveSystem) (*DataForCommit, error) {
+// Gets array of the form p0[0], p0[1], p1[0], p1[1], p2[0], p2[1], etc.
+// Each pair is a G1 point so an array of Points is returned.
+// This is not
+func strToG1s(curve CurveSystem, pointStr string) []Point {
+  pointStrCoords := strings.Split(pointStr, ",")
+  points := make([]Point, len(pointStrCoords)/2)
+  for i := 0; i < len(pointStrCoords); i += 2 {
+	//fmt.Printf("Reading pointsStrCoords i=%v of %v", i, len(pointStrCoords))
+    coord0, ok := new(big.Int).SetString(pointStrCoords[i], 0)
+	if !ok {
+	  panic(fmt.Errorf("failed parsing coord0 to big.Int: %v (big.Int value: %v)", pointStrCoords[i], coord0))
+	}
+	coord1, ok := new(big.Int).SetString(pointStrCoords[i+1], 0)
+    if !ok {
+      panic(fmt.Errorf("failed parsing coord1 to big.Int: %v (big.Int value: %v)", pointStrCoords[i], coord1))
+    }
+
+    bigintCoords := []*big.Int{coord0, coord1}
+	//fmt.Printf("strToG1: coord0=%v coord1=%v\n", coord0, coord1)
+    point, _ := curve.MakeG1Point(bigintCoords, true)
+	points[i/2] = point
+  }
+  return points
+}
+
+func strToG1(curve CurveSystem, pointStr string) Point {
+  pointStrCoords := strings.Split(pointStr, ",")
+  bigintCoords := make([]*big.Int, len(pointStrCoords))
+  for i := 0; i < len(pointStr); i++ {
+	bigintCoords[i], _ = new(big.Int).SetString(pointStrCoords[i], 0)
+  }
+  point, _ := curve.MakeG1Point(bigintCoords, true)
+  return point
+}
+
+func readDataFile(dataFile string, curve CurveSystem) (*AllDataForCommit, error) {
   var inBuf []byte
   var err error
   inBuf, err = ioutil.ReadFile(dataFile)
@@ -516,15 +612,17 @@ func readDataFile(dataFile string, curve CurveSystem) (*DataForCommit, error) {
   }
   return unmarshal(curve, inBuf)
 }
-func unmarshal(curve CurveSystem, bytes []byte) (*DataForCommit, error) {
+
+
+func unmarshal(curve CurveSystem, bytes []byte) (*AllDataForCommit, error) {
 
   //fmt.Println("Start unmarshal")
-  jsonData := new(JsonDataForCommit)
+  jsonData := new(JsonAllDataForCommit)
   if err := json.Unmarshal(bytes, jsonData); err != nil {
 	return nil, err
   }
   n := len(jsonData.CoefficientsAll)
-  commitData := new(DataForCommit)
+  commitData := new(AllDataForCommit)
   commitData.CoefficientsAll = make([][]*big.Int, n)
   commitData.PubCommitG1All = make([][]Point, n)
   commitData.PubCommitG2All = make([][]Point, n)
@@ -582,10 +680,24 @@ func unmarshal(curve CurveSystem, bytes []byte) (*DataForCommit, error) {
 
 }
 
-func marshal(commitData *DataForCommit) ([]byte, error) {
+func (keyPair KeyPair) Marshal() ([]byte, error) {
+
+  //type KeyPairJson struct {
+  //  SK string,
+  //  PK []string
+  //}
+  //
+  //keyPairJson := new KeyPairJson()
+  //keyPairJson.SK = bigIntToHexStr(keyPair.SK)
+  //keyPairJson(.PK = pointToStrArray(keyPair.PK)}
+
+  return json.Marshal(keyPair)
+}
+
+func marshal(commitData *AllDataForCommit) ([]byte, error) {
 
   n := len(commitData.CoefficientsAll)
-  jsonData := new(JsonDataForCommit)
+  jsonData := new(JsonAllDataForCommit)
   jsonData.CoefficientsAll = make([][]string, n)
   jsonData.PubCommitG1All = make([][][]string, n)
   jsonData.PubCommitG2All = make([][][]string, n)
@@ -601,11 +713,7 @@ func marshal(commitData *DataForCommit) ([]byte, error) {
   for i := 0; i < len(commitData.PubCommitG1All); i++ {
 	jsonData.PubCommitG1All[i] = make([][]string, len(commitData.PubCommitG1All[i]))
 	for j := 0; j < len(commitData.PubCommitG1All[i]); j++ {
-	  coords := commitData.PubCommitG1All[i][j].ToAffineCoords()
-	  coordsStr := make([]string, len(coords))
-	  for k := 0; k < len(coords); k++ {
-		coordsStr[k] = toHexBigInt(coords[k])
-	  }
+	  coordsStr := pointToStrArray(commitData.PubCommitG1All[i][j])
 	  jsonData.PubCommitG1All[i][j] = coordsStr
 	}
   }
@@ -613,11 +721,7 @@ func marshal(commitData *DataForCommit) ([]byte, error) {
   for i := 0; i < len(commitData.PubCommitG2All); i++ {
 	jsonData.PubCommitG2All[i] = make([][]string, len(commitData.PubCommitG2All[i]))
 	for j := 0; j < len(commitData.PubCommitG2All[i]); j++ {
-	  coords := commitData.PubCommitG2All[i][j].ToAffineCoords()
-	  coordsStr := make([]string, len(coords))
-	  for k := 0; k < len(coords); k++ {
-		coordsStr[k] = toHexBigInt(coords[k])
-	  }
+	  coordsStr := pointToStrArray(commitData.PubCommitG2All[i][j])
 	  jsonData.PubCommitG2All[i][j] = coordsStr
 	}
   }
@@ -632,11 +736,21 @@ func marshal(commitData *DataForCommit) ([]byte, error) {
   return json.MarshalIndent(jsonData, "", "  ")
 
 }
+func pointToStrArray(point Point) []string {
+  coords := point.ToAffineCoords()
+  coordsStr := make([]string, len(coords))
+  for k := 0; k < len(coords); k++ {
+	coordsStr[k] = toHexBigInt(coords[k])
+  }
+  return coordsStr
+
+}
 func toHexBigInt(n *big.Int) string {
   return fmt.Sprintf("0x%x", n) // or %X or upper case
 }
 
 func toPoint(strings []string) Point {
+
   panic("Not implemented")
 }
 
@@ -669,8 +783,8 @@ func boolToStr(boolRes bool) string {
   return fmt.Sprintf("%v", boolRes)
 }
 
-func bigIntToStr(bigInt *big.Int) string {
-  return fmt.Sprintf("%v", bigInt)
+func bigIntToHexStr(bigInt *big.Int) string {
+  return fmt.Sprintf("0x%x", bigInt)
 }
 
 func pointToStr(point Point) string {

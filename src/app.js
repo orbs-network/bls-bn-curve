@@ -15,24 +15,27 @@ let DEPOSIT_WEI = 25000000000000000000; // 1e18 * 25
 let THRESHOLD = 14;
 let OUTPUT_PATH = "../commit_data.json";
 let INTERACTIVE = false;
-let COMPLAINER_INDEX = -1; // 1-based
-let MALICIOUS_INDEX = -1;
-let ACCUSED_INDEX = -1; // 1-based
+let COMPLAINER_INDEX = 0; // 1-based
+let MALICIOUS_INDEX = 0; // 1-based
+let ACCUSED_INDEX = 0; // 1-based
 
 // Constants
 const MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED = 11;
-const CONTRACT_PATH = path.join(__dirname, '../contracts/dkgG2.sol');
-const CONTRACT_NAME = 'dkgG2';
+const CONTRACT_PATH = path.join(__dirname, '../contracts/dkgEnc.sol');
+// const CONTRACT_PATH = path.join(__dirname, '../contracts/dkgG2.sol');
+// const CONTRACT_NAME = 'dkgG2';
+const CONTRACT_NAME = 'dkgEnc';
 const CLIENTS = require('../data/accounts');
 
 let dkgContract;
-let allCommitDataJson;
+
+let dataPerParticipant = [];
 const gasUsed = {join: 0, commit: 0, phaseChange: 0};
 
 const enrollBlockToClient = {};
 const commitBlockToClient = {};
 
-// Entrypoint when calling directly with "node" command, not through run.sh.
+// Entry point when calling directly with "node" command, not through run.sh.
 // Useful for step-by-step debugging
 // Example debugging command:
 // node --inspect-brk src/app.js -n 22 -t 14 -d 25000000000000000000 -j ${HOME}/dev/orbs/go/src/github.com/orbs-network/bls-bn-curve/commit_data.json
@@ -47,24 +50,40 @@ module.exports = async function (callback) {
   callback();
 };
 
+// For each client, generate SK and PK
+function generateKeys() {
+  for (let i = 0; i < CLIENT_COUNT; i++) {
+    const res = bgls.GenerateKeyPair();
+    const json = JSON.parse(res);
+    CLIENTS[i].sk = json.sk; // bigint (as hex string)
+    CLIENTS[i].pk = json.pk; // bigint[2] (as array hex string[2])
+    logger.info(`i: ${i} SK: ${CLIENTS[i].sk} PK0: ${CLIENTS[i].pk[0]} PK1: ${CLIENTS[i].pk[1]}`)
+  }
+
+}
+
 async function main() {
   try {
     processCommandLineArgs(argv);
     logger.info('=====> Starting main flow <=====');
+    generateKeys();
     await deployManual();
+    createPhaseChangeListener();
     await enrollAllClients();
 
     if (COMPLAINER_INDEX > 0 && MALICIOUS_INDEX > 0 && ACCUSED_INDEX > 0) {
       logger.info(`Client ${COMPLAINER_INDEX} is complaining about client ${ACCUSED_INDEX}, and the actual culprit is client ${MALICIOUS_INDEX}`);
-      allCommitDataJson = getCommitDataWithErrors(COMPLAINER_INDEX, MALICIOUS_INDEX);
-      await commitAllClients(allCommitDataJson);
-      verifyPrivateCommit(COMPLAINER_INDEX, ACCUSED_INDEX); // TODO   Fill this
+      dataPerParticipant = getCommitDataWithErrors(COMPLAINER_INDEX, MALICIOUS_INDEX);
+      logger.info(`Data (partially tainted): ${JSON.stringify(dataPerParticipant)}`);
+      await commitAllClients(dataPerParticipant);
+      verifyPrivateCommit(COMPLAINER_INDEX, ACCUSED_INDEX);
       await sendComplaint(COMPLAINER_INDEX, ACCUSED_INDEX);
-      // signAndVerify();
+      signAndVerify();
     } else {
       logger.info('No one is complaining so running the contract to completion');
-      allCommitDataJson = getCommitData();
-      await commitAllClients(allCommitDataJson);
+      dataPerParticipant = getCommitData();
+      logger.info(`Data: ${JSON.stringify(dataPerParticipant)}`);
+      await commitAllClients(dataPerParticipant);
       await phaseChange(CLIENTS[0]);
     }
 
@@ -82,6 +101,27 @@ function processCommandLineArgs(myArgs) {
   COMPLAINER_INDEX = myArgs.c;
   MALICIOUS_INDEX = myArgs.m;
   ACCUSED_INDEX = myArgs.a;
+}
+
+function populateParticipants() {
+  // TODO impl me
+}
+
+function createPhaseChangeListener() {
+  const events = dkgContract.PhaseChange();
+  events.watch((error, result) => {
+    logger.info(`@PhaseChange@ fired: result: ${JSON.stringify(result)} block: ${result.blockNumber}`);
+
+    const phase = 1; // enum Phase { Enrollment, Commit, PostCommit, EndSuccess, EndFail } // start from 0
+
+    switch (phase) {
+      case 1:
+        populateParticipants();
+        break;
+    }
+
+    // logger.info(`watch enroll: ${JSON.stringify(result)}`);
+  });
 }
 
 
@@ -175,11 +215,15 @@ async function enroll(client, i) {
       }
     });
 
-    dkgContract.join(
+    const pk0 = web3.toBigNumber(client.pk[0]);
+    const pk1 = web3.toBigNumber(client.pk[1]);
+
+    logger.info(`join() params: pk0: ${pk0} pk1: ${pk1}`);
+    dkgContract.join([pk0, pk1], // bigint[2]
       {
         from: client.address,
         value: DEPOSIT_WEI,
-        gasLimit: 3000000,
+        gas: 3000000,
       }, (err, result) => {
         if (err) {
           reject(err);
@@ -197,16 +241,16 @@ async function enroll(client, i) {
   });
 }
 
-async function commitAllClients(json) {
+async function commitAllClients(data) {
   logger.info(` =====> Starting commit phase <=====`);
-  const {CoefficientsAll, PubCommitG1All, PubCommitG2All, PrvCommitAll} = json;
+  // const {CoefficientsAll, PubCommitG1All, PubCommitG2All, PrvCommitAll} = json;
   logger.info("Notice the difference in gas costs between join() and commit()");
 
   for (let i = 0; i < CLIENT_COUNT; i++) {
     if (i < 2) {
       pause();
     }
-    await commit(CLIENTS[i], i, CoefficientsAll[i], PubCommitG1All[i], PubCommitG2All[i], PrvCommitAll[i]);
+    await commit(CLIENTS[i], i, data[i].Coefficients, data[i].PubCommitG1, data[i].PubCommitG2, data[i].PrvCommit);
   }
   logger.info(`***** Total gas used for commit(): ${gasUsed.commit} *****`);
   const balanceWei = web3.eth.getBalance(dkgContract.address);
@@ -291,28 +335,40 @@ function verifyPrivateCommit(complainerIndex, accusedIndex) {
 
 
 function getCommitData() {
-  bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENT_COUNT, OUTPUT_PATH);
-  const data = require(OUTPUT_PATH);
+
+  const data = bgls.GetCommitDataForAllParticipants(THRESHOLD, CLIENTS, CLIENT_COUNT);
+  // const data = require(OUTPUT_PATH);
   // printDataPerClient(allCommitDataJson);
-  logger.debug('Read contents of file ', OUTPUT_PATH);
   logger.info('Finished generating commitments data.');
+
   // pause();
   return data;
 }
 
 function getCommitDataWithErrors(complainerIndex, maliciousIndex) {
-  bgls.GetCommitDataForAllParticipantsWithIntentionalErrors(THRESHOLD, CLIENT_COUNT, complainerIndex, maliciousIndex, OUTPUT_PATH);
-  logger.info(`Reading data file (with intentional errors) ${OUTPUT_PATH} ...`);
-  const data = require(OUTPUT_PATH);
-  logger.debug('Read contents of file (with intentional errors)', OUTPUT_PATH);
+
+  const data = getCommitData();
+  data.PrvCommitAll[maliciousIndex][complainerIndex] = "000123456789ABCDEF"; // Taint the data
+  logger.info(`Tainted private commitment of maliciousIndex=${maliciousIndex} to complainerIndex=${complainerIndex}.`);
+
   return data;
+
 }
+
+//   // data.PrvCommitAll[maliciousIndex][complainerIndex]
+//   bgls.GetCommitDataForAllParticipantsWithIntentionalErrors(THRESHOLD, CLIENT_COUNT, complainerIndex, maliciousIndex, OUTPUT_PATH);
+//   logger.info(`Reading data file (with intentional errors) ${OUTPUT_PATH} ...`);
+//   const data = require(OUTPUT_PATH);
+//   logger.debug('Read contents of file (with intentional errors)', OUTPUT_PATH);
+//   return data;
+// }
 
 async function sendComplaint(complainerIndex, accusedIndex) {
 
   logger.info(`Now client ID #${complainerIndex} is sending a complaint on client ID #${accusedIndex}`);
   pause();
-  const res = await dkgContract.complaintPrivateCommit(complainerIndex, accusedIndex, {
+  const complainerSK = CLIENTS[complainerIndex - 1].sk;
+  const res = await dkgContract.complaintPrivateCommit(complainerIndex, accusedIndex, complainerSK, {
     from: CLIENTS[complainerIndex - 1].address,
     gasLimit: 3000000
   });
@@ -344,7 +400,7 @@ async function phaseChange(client) {
   const res = await new Promise((resolve, reject) => {
     dkgContract.phaseChange({
       from: client.address,
-      gasLimit: 300000
+      gas: 300000
     }, (err, result) => {
       if (err) {
         reject(err);
@@ -363,9 +419,8 @@ async function phaseChange(client) {
         logger.info(`***** Total gas used: ${getTotalGasUsed()} *****`);
         console.log('');
 
-        const clients = CLIENTS.slice(CLIENT_COUNT);
-        for (const client of clients) {
-          logger.info(`Total gas used by client ${client.id}: ${client.gasUsed}`);
+        for (let i = 0; i < CLIENT_COUNT; i++) {
+          logger.info(`Total gas used by client ${CLIENTS[i].id}: ${CLIENTS[i].gasUsed}`);
         }
         resolve(result);
       }
