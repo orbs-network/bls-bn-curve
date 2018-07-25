@@ -6,6 +6,7 @@ const logger = bgls.logger;
 const solc = require('solc');
 const argv = require('minimist')(process.argv.slice(2));
 const readlineSync = require('readline-sync');
+const async = require('async');
 
 // Default values
 let CONTRACT_ADDRESS = '0xF7d58983Dbe1c84E03a789A8A2274118CC29b5da';
@@ -20,7 +21,7 @@ let MALICIOUS_INDEX = 0; // 1-based
 let ACCUSED_INDEX = 0; // 1-based
 
 // Constants
-const MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED = 11;
+let MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED = 11;
 const CONTRACT_PATH = path.join(__dirname, '../contracts/dkgEnc.sol');
 // const CONTRACT_PATH = path.join(__dirname, '../contracts/dkgG2.sol');
 // const CONTRACT_NAME = 'dkgG2';
@@ -68,12 +69,15 @@ async function main() {
     logger.info('=====> Starting main flow <=====');
     generateKeys();
     await deployManual();
+    let timeout = await dkgContract.commitTimeout.call();
+    MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED = timeout + 1;
     createPhaseChangeListener();
     await enrollAllClients();
 
     if (COMPLAINER_INDEX > 0 && MALICIOUS_INDEX > 0 && ACCUSED_INDEX > 0) {
       logger.info(`Client ${COMPLAINER_INDEX} is complaining about client ${ACCUSED_INDEX}, and the actual culprit is client ${MALICIOUS_INDEX}`);
       dataPerParticipant = getCommitDataWithErrors(COMPLAINER_INDEX, MALICIOUS_INDEX);
+      fs.writeFileSync(OUTPUT_PATH, JSON.stringify(dataPerParticipant));
       logger.info(`Data (partially tainted): ${JSON.stringify(dataPerParticipant)}`);
       await commitAllClients(dataPerParticipant);
       verifyPrivateCommit(COMPLAINER_INDEX, ACCUSED_INDEX);
@@ -82,9 +86,11 @@ async function main() {
     } else {
       logger.info('No one is complaining so running the contract to completion');
       dataPerParticipant = getCommitData();
-      logger.info(`Data: ${JSON.stringify(dataPerParticipant)}`);
+      fs.writeFileSync(OUTPUT_PATH, JSON.stringify(dataPerParticipant));
+      // logger.debug(`Data: ${JSON.stringify(dataPerParticipant)}`);
       await commitAllClients(dataPerParticipant);
       await phaseChange(CLIENTS[0]);
+      signAndVerify();
     }
 
   } catch (e) {
@@ -110,9 +116,8 @@ function populateParticipants() {
 function createPhaseChangeListener() {
   const events = dkgContract.PhaseChange();
   events.watch((error, result) => {
-    logger.info(`@PhaseChange@ fired: result: ${JSON.stringify(result)} block: ${result.blockNumber}`);
-
-    const phase = 1; // enum Phase { Enrollment, Commit, PostCommit, EndSuccess, EndFail } // start from 0
+    const phase = result.args.phase; // enum Phase { Enrollment, Commit, PostCommit, EndSuccess, EndFail } // start from 0
+    logger.info(`@@@PhaseChange@@@ fired: new phase: ${phase} result: ${JSON.stringify(result)} block: ${result.blockNumber}`);
 
     switch (phase) {
       case 1:
@@ -251,6 +256,10 @@ async function commitAllClients(data) {
       pause();
     }
     await commit(CLIENTS[i], i, data[i].Coefficients, data[i].PubCommitG1, data[i].PubCommitG2, data[i].PrvCommit);
+    const isCommitted = await dkgContract.getParticipantIsCommitted(CLIENTS[i].id);
+    const curN = await dkgContract.curN.call();
+    const curPhase = await dkgContract.curPhase.call();
+    logger.info(`isCommitted(${CLIENTS[i].id}): ${isCommitted} curN: ${curN} curPhase: ${curPhase}`);
   }
   logger.info(`***** Total gas used for commit(): ${gasUsed.commit} *****`);
   const balanceWei = web3.eth.getBalance(dkgContract.address);
@@ -266,10 +275,12 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
     throw new Error(`Missing client ID for client #${i} ${client.address}. Client ID is the result of join(). Did join() finished correctly?`);
   }
 
-  const g1Flat = commitG1.split(",");
-  const g2Flat = commitG2.split(",");
+  // const g1Flat = commitG1.split(",");
+  // const g2Flat = commitG2.split(",");
+  const g1Flat = commitG1;
+  const g2Flat = commitG2;
 
-    // const commitG1BigInts = commitG1.map(e => e.map(numstr => {
+  // const commitG1BigInts = commitG1.map(e => e.map(numstr => {
   //   return web3.toHex(numstr);
   // }));
   // const commitG2BigInts = commitG2.map(e => e.map(numstr => web3.toHex(numstr)));
@@ -317,7 +328,7 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
         // console.log(`Commit receipt: ${JSON.stringify(receipt)}`);
         gasUsed.commit += receipt.gasUsed;
         client.gasUsed += receipt.gasUsed;
-        logger.info(`Client ID #${client.id} of ${CLIENTS.length} *** Gas used: ${receipt.gasUsed}. *** Block ${receipt.blockNumber}`);
+        logger.info(`Client ID #${client.id} of ${CLIENT_COUNT} *** Gas used: ${receipt.gasUsed}. *** Block ${receipt.blockNumber}`);
         logger.debug(`Commit(): Client ID #${client.id} ${client.address} committed successfully. Result: ${JSON.stringify(receipt)}`);
       }
     });
@@ -343,6 +354,10 @@ function getCommitData() {
   // const data = require(OUTPUT_PATH);
   // printDataPerClient(allCommitDataJson);
   logger.info('Finished generating commitments data.');
+  for (let i = 0; i < CLIENT_COUNT; i++) {
+    data[i].PK = CLIENTS[i].pk;
+    data[i].SK = CLIENTS[i].sk;
+  }
 
   // pause();
   return data;
@@ -396,7 +411,7 @@ async function phaseChange(client) {
   logger.info(`We will now mine ${MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED} blocks to simulate that no one complained for some time after all commits were executed, therefore it is safe to finalize the commit() phase`);
 
   pause();
-  await mineNBlocks(11);
+  await mineNBlocks(MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED);
   logger.info(`No one complained, so calling phaseChange() to finalize commit phase. `);
   logger.info(`Take note of the present balance of accounts and compare to after calling phaseChange().`);
   pause();
@@ -453,10 +468,27 @@ const mineOneBlock = async () => {
 };
 
 const mineNBlocks = async n => {
-  for (let i = 0; i < n; i++) {
-    await mineOneBlock()
-  }
+  forceMineBlocks(n, err => console.log(`err: ${err} ${JSON.stringify(err)}`))
+  // for (let i = 0; i < n; i++) {
+  //   await mineOneBlock()
+  // }
 };
+
+function forceMineBlocks(numOfBlockToMine, cb) {
+  const mineArr = [];
+  for (let i = 0; i < numOfBlockToMine; i++) {
+    mineArr.push(async.apply(web3.currentProvider.sendAsync, {
+      jsonrpc: "2.0",
+      method: "evm_mine",
+      id: 12345
+    }));
+  }
+
+
+  async.parallel(mineArr, (err) => {
+    cb(err);
+  });
+}
 
 async function printValuesFromContract() {
   const valuesFromContract = {};
@@ -470,13 +502,6 @@ async function printValuesFromContract() {
   logger.info(` > t: ${valuesFromContract.t.toString()}`);
   logger.info(` > p: ${valuesFromContract.p.toString()}`);
   logger.info(` > q: ${valuesFromContract.q.toString()}`);
-}
-
-function printAccounts() {
-  for (const a of CLIENTS) {
-    logger.info(`Account: ${a.address}`)
-  }
-  logger.info(`Total of ${CLIENTS.length} accounts`);
 }
 
 function toShortHex(hexStr) {

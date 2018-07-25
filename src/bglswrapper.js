@@ -33,15 +33,21 @@ function GetCommitDataForSingleParticipant(id, threshold, clientCount, sk, pks) 
   return res;
 }
 
-function GetCommitDataForAllParticipants(threshold, clientsData, clientsCount) {
-
-  const allData = [];
+function getPKsStr(clientsData, clientsCount) {
   const pks = [];
   for(let i=0; i<clientsCount; i++) {
     pks.push(clientsData[i].pk);
   }
   const pksStr = _.flatMap(pks).join(",");
-  logger.info(`Will call get commit data with these ${clientsCount} pks: ${pks}`);
+  return pksStr;
+}
+
+function GetCommitDataForAllParticipants(threshold, clientsData, clientsCount) {
+
+  const allData = [];
+  const pksStr = getPKsStr(clientsData, clientsCount);
+
+  logger.info(`Will call get commit data with these ${clientsCount} pks: ${pksStr}`);
   for(let i=0; i<clientsCount; i++) {
     const sk = clientsData[i].sk;
     logger.info(`Calling GetCommitDataForSingleParticipant with index: ${i+1} t: ${threshold} n: ${clientsCount} sk: ${sk}`);
@@ -105,8 +111,8 @@ function VerifyPrivateCommitment(complainerIndex, accusedIndex, outputPath) {
 function SignAndVerify(threshold, clientCount, outputPath) {
   // const json = require(outputPath);
   const cmd = `${EXEC_PATH} -func=SignAndVerify ${threshold} ${clientCount} ${outputPath}`;
-  const stdoutBuffer = execSync(cmd, {cwd: CWD});
-  logger.debug(stdoutBuffer.toString());
+  const stdoutBuffer = runExternal(cmd);
+  logger.info(stdoutBuffer.toString());
   return stdoutBuffer;
 }
 
