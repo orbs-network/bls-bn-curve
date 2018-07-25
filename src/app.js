@@ -266,18 +266,21 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
     throw new Error(`Missing client ID for client #${i} ${client.address}. Client ID is the result of join(). Did join() finished correctly?`);
   }
 
-  const commitG1BigInts = commitG1.map(e => e.map(numstr => {
-    return web3.toHex(numstr);
-  }));
-  const commitG2BigInts = commitG2.map(e => e.map(numstr => web3.toHex(numstr)));
-  const prvBigInts = commitPrv.map(numstr => web3.toHex(numstr));
+  const g1Flat = commitG1.split(",");
+  const g2Flat = commitG2.split(",");
 
-  logger.info(`===> Commit(Index: ${client.id}) <===`);
-  const g1Flat = _.flatMap(commitG1BigInts);
-  const g2Flat = _.flatMap(commitG2BigInts);
+    // const commitG1BigInts = commitG1.map(e => e.map(numstr => {
+  //   return web3.toHex(numstr);
+  // }));
+  // const commitG2BigInts = commitG2.map(e => e.map(numstr => web3.toHex(numstr)));
+  const prv = commitPrv.map(numstr => web3.toHex(numstr));
+  //
+  // logger.info(`===> Commit(Index: ${client.id}) <===`);
+  // const g1Flat = _.flatMap(commitG1BigInts);
+  // const g2Flat = _.flatMap(commitG2BigInts);
   logger.debug(`G1: ${JSON.stringify(g1Flat)}`);
   logger.debug(`G2: ${JSON.stringify(g2Flat)}`);
-  logger.debug(`Prv: ${JSON.stringify(prvBigInts)}`);
+  logger.debug(`Prv: ${JSON.stringify(prv)}`);
 
   await new Promise((resolve, reject) => {
 
@@ -301,7 +304,7 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
       }
     });
 
-    dkgContract.commit(client.id, g1Flat, g2Flat, prvBigInts, {
+    dkgContract.commit(client.id, g1Flat, g2Flat, prv, {
       from: client.address,
       gas: 3000000
     }, (err, result) => {

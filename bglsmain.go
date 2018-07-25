@@ -24,10 +24,9 @@ const INTERACTIVE = true
 const BigintAsStrBase = 16 // All bigints as strings are in hex
 
 type KeyPair struct {
-  SK string `json:"sk"`
+  SK string   `json:"sk"`
   PK []string `json:"pk"`
 }
-
 
 type AllDataForCommit struct {
   CoefficientsAll [][]*big.Int
@@ -42,6 +41,8 @@ type DataForCommit struct {
   PubCommitG2  []Point
   PrvCommit    []*big.Int
 }
+
+type JsonPoint Point
 
 type JsonAllDataForCommit struct {
   CoefficientsAll [][]string
@@ -337,15 +338,17 @@ func verifySigOnSubset(curve CurveSystem, indices []*big.Int, sigs []Point, grou
   return true, nil
 }
 
-func pointToHexCoords(p Point) string {
 
-  coords := p.ToAffineCoords()
-  res := make([]string, len(coords))
-  for i, coord := range coords {
-	res[i] = toHexBigInt(coord)
-  }
-  return fmt.Sprintf("%v", res)
-}
+//func pointToJson(p Point) string {
+//  coords := p.ToAffineCoords()
+//  res := make([]string, len(coords))
+//  for i, coord := range coords {
+//	res[i] = toHexBigInt(coord)
+//  }
+//  res, _ := json.Marshal(res)
+//  return res
+//}
+
 
 // Returns pubCommitG1 (array of 2d points), pubCommitG2 (array of 4d points) and prvCommit (array of bigints)
 // This is for
@@ -381,7 +384,7 @@ func main() {
 
   case "VerifyPrivateCommitment":
 	// func VerifyPrivateCommitment(curve CurveSystem, myIndex *big.Int, prvCommit *big.Int, pubCommitG1 []Point) bool {
-	myIndex, _ := strconv.Atoi(flag.Args()[0])                           // 2   1-based
+	myIndex, _ := strconv.Atoi(flag.Args()[0]) // 2   1-based
 	prvCommit, _ := new(big.Int).SetString(flag.Arg(1), 0)
 	pubCommitG1 := strToG1s(curve, flag.Arg(2))
 	// prvCommit is prvCommitAll[0][1] - this is what client 0 has commited to client 1
@@ -404,11 +407,11 @@ func main() {
 
 	// TODO Add marshalling for point - maybe add new type like in JsonAllDataForCommit
 
-    json, err := json.Marshal(dataForCommit)
-    if err != nil {
+	json, err := json.Marshal(dataForCommit)
+	if err != nil {
 	  fmt.Println("Error: ", err)
-    }
-    fmt.Printf("%v\n", string(json))
+	}
+	fmt.Printf("%v\n", string(json))
 
 	/*
 			case "VerifyPrivateCommitment__":
@@ -495,14 +498,14 @@ func main() {
 
   case "GenerateKeyPair":
 	sk, pk, _, _ := dkg.CoefficientGen(curve)
-    keyPair := KeyPair{bigIntToHexStr(sk), pointToStrArray(pk)}
-    //keyPairJson, _ := keyPair.Marshal()
-    //fmt.Println(keyPair)
-    json, err := json.Marshal(keyPair)
-    if err != nil {
-      fmt.Println("Error: ", err)
-    }
-    fmt.Printf("%v\n", string(json))
+	keyPair := KeyPair{bigIntToHexStr(sk), pointToStrArray(pk)}
+	//keyPairJson, _ := keyPair.Marshal()
+	//fmt.Println(keyPair)
+	json, err := json.Marshal(keyPair)
+	if err != nil {
+	  fmt.Println("Error: ", err)
+	}
+	fmt.Printf("%v\n", string(json))
 
 	/*
 	case "LoadPublicKeyG1":
@@ -575,18 +578,18 @@ func strToG1s(curve CurveSystem, pointStr string) []Point {
   points := make([]Point, len(pointStrCoords)/2)
   for i := 0; i < len(pointStrCoords); i += 2 {
 	//fmt.Printf("Reading pointsStrCoords i=%v of %v", i, len(pointStrCoords))
-    coord0, ok := new(big.Int).SetString(pointStrCoords[i], 0)
+	coord0, ok := new(big.Int).SetString(pointStrCoords[i], 0)
 	if !ok {
 	  panic(fmt.Errorf("failed parsing coord0 to big.Int: %v (big.Int value: %v)", pointStrCoords[i], coord0))
 	}
 	coord1, ok := new(big.Int).SetString(pointStrCoords[i+1], 0)
-    if !ok {
-      panic(fmt.Errorf("failed parsing coord1 to big.Int: %v (big.Int value: %v)", pointStrCoords[i], coord1))
-    }
+	if !ok {
+	  panic(fmt.Errorf("failed parsing coord1 to big.Int: %v (big.Int value: %v)", pointStrCoords[i], coord1))
+	}
 
-    bigintCoords := []*big.Int{coord0, coord1}
+	bigintCoords := []*big.Int{coord0, coord1}
 	//fmt.Printf("strToG1: coord0=%v coord1=%v\n", coord0, coord1)
-    point, _ := curve.MakeG1Point(bigintCoords, true)
+	point, _ := curve.MakeG1Point(bigintCoords, true)
 	points[i/2] = point
   }
   return points
@@ -612,7 +615,6 @@ func readDataFile(dataFile string, curve CurveSystem) (*AllDataForCommit, error)
   }
   return unmarshal(curve, inBuf)
 }
-
 
 func unmarshal(curve CurveSystem, bytes []byte) (*AllDataForCommit, error) {
 
@@ -787,16 +789,29 @@ func bigIntToHexStr(bigInt *big.Int) string {
   return fmt.Sprintf("0x%x", bigInt)
 }
 
-func pointToStr(point Point) string {
-  return fmt.Sprintf("%v", point)
+//func pointToStr(point Point) string {
+//
+//  point.ToAffineCoords()
+//
+//  //return fmt.Sprintf("%v", point)
+//}
+
+func pointToHexCoords(p Point) string {
+
+  coords := p.ToAffineCoords()
+  res := make([]string, len(coords))
+  for i, coord := range coords {
+	res[i] = toHexBigInt(coord)
+  }
+  return strings.Join(res, ",")
 }
 
-func pointsToStr(points []Point) interface{} {
+func pointsToStr(points []Point) string {
   pointsStr := make([]string, len(points))
   for i := 0; i < len(points); i++ {
-	pointsStr[i] = pointToStr(points[i])
+	pointsStr[i] = pointToHexCoords(points[i])
   }
-  return strings.Join(pointsStr, " ")
+  return strings.Join(pointsStr, ",")
 }
 
 func Init() {
@@ -814,4 +829,23 @@ func readFromStdin(caption string) (string) {
   fmt.Print(caption)
   text, _ := reader.ReadString('\n')
   return text
+}
+
+func (data DataForCommit) MarshalJSON() ([]byte, error) {
+
+  type JsonDateForCommit struct {
+	Coefficients []*big.Int
+	PubCommitG1  string
+	PubCommitG2  string
+	PrvCommit    []*big.Int
+  }
+
+  res := new(JsonDateForCommit)
+  res.Coefficients = data.Coefficients
+  res.PubCommitG1 = pointsToStr(data.PubCommitG1)
+  res.PubCommitG2 = pointsToStr(data.PubCommitG2)
+  //fmt.Printf("G1=%v G2=%v\n", res.PubCommitG1, res.PubCommitG2)
+  res.PrvCommit = data.PrvCommit
+
+  return json.Marshal(res)
 }
