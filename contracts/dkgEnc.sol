@@ -95,7 +95,7 @@ contract dkgEnc {
   uint16 public curN; // current num of participants
 
   uint256 public phaseStart;
-  uint256 public constant commitTimeout = 10;
+  uint256 public constant commitTimeout = 100;
 
 
 

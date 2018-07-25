@@ -14,9 +14,9 @@ DEPOSIT_WEI=25000000000000000000
 KEEP_GANACHE_ALIVE=false
 DATA_FILE=$(pwd)/commit_data.json
 MNEMONIC="decorate provide ritual swarm will inmate sausage lab banana daring trash liar"
-COMPLAINER_INDEX=0 # 1-based, the client that complains about client ACCUSED_INDEX
-MALICIOUS_INDEX=0 # 1-based, the client that actually tainted its data
-ACCUSED_INDEX=0 # 1-based, the client that is accused by client COMPLAINER_INDEX of tainting its data
+COMPLAINER_INDEX=1 # 1-based, the client that complains about client ACCUSED_INDEX
+MALICIOUS_INDEX=2 # 1-based, the client that actually tainted its data
+ACCUSED_INDEX=2 # 1-based, the client that is accused by client COMPLAINER_INDEX of tainting its data
 
 while getopts ":n:t:pk" opt; do
   case $opt in

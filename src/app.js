@@ -23,8 +23,6 @@ let ACCUSED_INDEX = 0; // 1-based
 // Constants
 let MIN_BLOCKS_MINED_TILL_COMMIT_IS_APPROVED = 11;
 const CONTRACT_PATH = path.join(__dirname, '../contracts/dkgEnc.sol');
-// const CONTRACT_PATH = path.join(__dirname, '../contracts/dkgG2.sol');
-// const CONTRACT_NAME = 'dkgG2';
 const CONTRACT_NAME = 'dkgEnc';
 const CLIENTS = require('../data/accounts');
 
@@ -338,7 +336,7 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
 
 function verifyPrivateCommit(complainerIndex, accusedIndex) {
 
-  logger.info(`Now client ID #${complainerIndex} is verifying the private commitment of client ID #${accusedIndex}`);
+  logger.info(`Now client ID #${complainerIndex} (complainer) is verifying the private commitment of client ID #${accusedIndex} (accused)`);
   logger.info(`The private commitment of client ID #${accusedIndex} was intentionally tainted.`);
 
 
@@ -366,28 +364,27 @@ function getCommitData() {
 function getCommitDataWithErrors(complainerIndex, maliciousIndex) {
 
   const data = getCommitData();
-  data.PrvCommitAll[maliciousIndex][complainerIndex] = "000123456789ABCDEF"; // Taint the data
+
+  // Actual data is 0-based so -1 the input values which are 1-based
+  data[maliciousIndex-1].PrvCommit[complainerIndex-1] = "0x00000000000000001234567812345678123456781234567812345678FFFFFFFF"; // Taint the data
   logger.info(`Tainted private commitment of maliciousIndex=${maliciousIndex} to complainerIndex=${complainerIndex}.`);
 
   return data;
 
 }
 
-//   // data.PrvCommitAll[maliciousIndex][complainerIndex]
-//   bgls.GetCommitDataForAllParticipantsWithIntentionalErrors(THRESHOLD, CLIENT_COUNT, complainerIndex, maliciousIndex, OUTPUT_PATH);
-//   logger.info(`Reading data file (with intentional errors) ${OUTPUT_PATH} ...`);
-//   const data = require(OUTPUT_PATH);
-//   logger.debug('Read contents of file (with intentional errors)', OUTPUT_PATH);
-//   return data;
-// }
-
 async function sendComplaint(complainerIndex, accusedIndex) {
 
-  logger.info(`Now client ID #${complainerIndex} is sending a complaint on client ID #${accusedIndex}`);
   pause();
   const complainerSK = CLIENTS[complainerIndex - 1].sk;
-  const res = await dkgContract.complaintPrivateCommit(complainerIndex, accusedIndex, complainerSK, {
-    from: CLIENTS[complainerIndex - 1].address,
+  const complainerID = CLIENTS[complainerIndex - 1].id;
+  const complainerAddress = CLIENTS[complainerIndex - 1].address;
+  const accusedID = CLIENTS[accusedIndex - 1].id;
+  const curPhase = await dkgContract.curPhase.call();
+  logger.info(`Now client ID #${complainerID} (addr: ${complainerAddress}) is sending a complaint on client ID #${accusedID}. Phase: ${curPhase} SK: ${complainerSK}`);
+
+  const res = await dkgContract.complaintPrivateCommit(complainerID, accusedID, complainerSK, {
+    from: complainerAddress,
     gasLimit: 3000000
   });
 

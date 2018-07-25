@@ -69,15 +69,6 @@ function GetCommitDataForAllParticipants_(threshold, clientCount, outputPath) {
   return res;
 }
 
-// function GetCommitDataForAllParticipantsWithIntentionalErrors(threshold, clientCount, complainerIndex, maliciousIndex, outputPath) {
-//   const cmd = `${EXEC_PATH} -func=GetCommitDataForAllParticipantsWithIntentionalErrors ${threshold} ${clientCount} ${complainerIndex} ${maliciousIndex} ${outputPath}`;
-//
-//   const res = runExternal(cmd);
-//   const json = require(outputPath);
-//   logger.debug(`GetCommitDataForAllParticipantsWithIntentionalErrors(): Read data from file: ${JSON.stringify(json)}`);
-//   return res;
-// }
-
 function GenerateKeyPair() {
   const cmd = `${EXEC_PATH} -func=GenerateKeyPair`;
   const buf = runExternal(cmd);

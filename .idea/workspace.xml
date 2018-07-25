@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list id="e537697b-47bd-4bb3-9b12-39e1a9f5c89b" name="dkgEnc" comment="" />
     <list default="true" id="a09d8812-db46-4c8c-934a-2686e83d6a83" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bglsmain.go" beforeDir="false" afterPath="$PROJECT_DIR$/bglsmain.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contracts/dkgEnc.sol" beforeDir="false" afterPath="$PROJECT_DIR$/contracts/dkgEnc.sol" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/run.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/bglswrapper.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/bglswrapper.js" afterDir="false" />
     </list>
+    <list id="e537697b-47bd-4bb3-9b12-39e1a9f5c89b" name="dkgEnc" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -20,11 +19,20 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="app.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="app.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/app.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="420">
-              <caret line="76" column="34" selection-start-line="76" selection-start-column="34" selection-end-line="76" selection-end-column="34" />
+            <state relative-caret-position="699">
+              <caret line="543" lean-forward="true" selection-start-line="543" selection-end-line="543" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="run.sh" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/run.sh">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="176">
+              <caret line="18" column="15" selection-start-line="18" selection-start-column="15" selection-end-line="18" selection-end-column="15" />
             </state>
           </provider>
         </entry>
@@ -32,8 +40,8 @@
       <file leaf-file-name="bglsmain.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bglsmain.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="263">
-              <caret line="291" column="36" lean-forward="true" selection-start-line="291" selection-start-column="36" selection-end-line="291" selection-end-column="36" />
+            <state relative-caret-position="631">
+              <caret line="611" selection-start-line="611" selection-end-line="611" />
             </state>
           </provider>
         </entry>
@@ -42,7 +50,7 @@
         <entry file="file://$PROJECT_DIR$/commit_data.json">
           <provider selected="true" editor-type-id="text-editor">
             <state>
-              <caret column="1731" selection-start-column="1731" selection-end-column="1731" />
+              <caret column="7071" selection-start-column="7071" selection-end-column="7071" />
             </state>
           </provider>
         </entry>
@@ -50,8 +58,8 @@
       <file leaf-file-name="dkg_test.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../bgls/dkg/dkg_test.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="619">
-              <caret line="134" column="63" selection-start-line="134" selection-start-column="19" selection-end-line="134" selection-end-column="63" />
+            <state relative-caret-position="261">
+              <caret line="81" column="15" selection-start-line="81" selection-start-column="15" selection-end-line="81" selection-end-column="15" />
             </state>
           </provider>
         </entry>
@@ -59,8 +67,8 @@
       <file leaf-file-name="dkg.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../bgls/dkg/dkg.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="221">
-              <caret line="13" column="5" selection-start-line="13" selection-start-column="5" selection-end-line="13" selection-end-column="5" />
+            <state relative-caret-position="244">
+              <caret line="66" column="5" selection-start-line="66" selection-start-column="5" selection-end-line="66" selection-end-column="5" />
             </state>
           </provider>
         </entry>
@@ -68,17 +76,17 @@
       <file leaf-file-name="dkgEnc.sol" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/contracts/dkgEnc.sol">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="261">
-              <caret line="96" column="28" selection-start-line="96" selection-start-column="28" selection-end-line="96" selection-end-column="28" />
+            <state relative-caret-position="252">
+              <caret line="322" column="80" lean-forward="true" selection-start-line="322" selection-start-column="80" selection-end-line="322" selection-end-column="80" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="bglswrapper.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="bglswrapper.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="326">
-              <caret line="96" column="38" selection-start-line="96" selection-start-column="38" selection-end-line="96" selection-end-column="38" />
+            <state relative-caret-position="-168">
+              <caret line="71" selection-start-line="71" selection-end-line="71" />
             </state>
           </provider>
         </entry>
@@ -95,36 +103,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>verify</find>
-      <find>dec</find>
-      <find>verifysi</find>
-      <find>signand</find>
-      <find>commitprvall</find>
-      <find>.enc</find>
-      <find>getallp</find>
-      <find>reconstruc</find>
-      <find>getcommit</find>
-      <find>forsingl</find>
-      <find>client_c</find>
-      <find>keypa</find>
-      <find>.pk</find>
+      <find>verifypriv</find>
+      <find>accusedin</find>
+      <find>accused</find>
+      <find>verifypri</find>
+      <find>complain</find>
+      <find>fff</find>
+      <find>fmt.</find>
+      <find>getcommitda</find>
       <find>sk</find>
-      <find>pks</find>
-      <find>unmarshaljson</find>
-      <find>.sk</find>
-      <find>is not the</find>
-      <find>first dec</find>
-      <find>generatekey</find>
-      <find>decrypt</find>
-      <find>encrypt</find>
-      <find>write</find>
-      <find>getcom</find>
-      <find>signandv</find>
-      <find>prvcom</find>
-      <find>enc</find>
-      <find>passed</find>
-      <find>is diff</find>
+      <find>verifypr</find>
+      <find>accused_</find>
+      <find>verifyp</find>
+      <find>getcommit</find>
+      <find>is ve</find>
+      <find>calling v</find>
       <find>compla</find>
+      <find>.compa</find>
+      <find>complaintpri</find>
+      <find>.commit</find>
+      <find>phase</find>
+      <find>complaintpr</find>
+      <find>curph</find>
+      <find>complaintp</find>
+      <find>checka</find>
+      <find>.COMMIT(</find>
+      <find>COMPLAINTPR</find>
+      <find>priva</find>
+      <find>checkau</find>
+      <find>.commit(</find>
+      <find>complaintpu</find>
     </findStrings>
     <replaceStrings>
       <replace>logger.info</replace>
@@ -180,9 +188,9 @@
         <option value="$PROJECT_DIR$/dkg/bglswrapper.go" />
         <option value="$PROJECT_DIR$/run.sh" />
         <option value="$PROJECT_DIR$/contracts/dkgEnc.sol" />
-        <option value="$PROJECT_DIR$/src/bglswrapper.js" />
-        <option value="$PROJECT_DIR$/src/app.js" />
         <option value="$PROJECT_DIR$/bglsmain.go" />
+        <option value="$PROJECT_DIR$/src/app.js" />
+        <option value="$PROJECT_DIR$/src/bglswrapper.js" />
       </list>
     </option>
   </component>
@@ -200,11 +208,11 @@
       <path value="$PROJECT_DIR$/package.json" />
     </packageJsonPaths>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="-3440" />
-    <option name="y" value="-861" />
-    <option name="width" value="1720" />
-    <option name="height" value="1417" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="-2" />
+    <option name="y" value="23" />
+    <option name="width" value="80" />
+    <option name="height" value="22" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -395,19 +403,19 @@
     </history-entry>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-3440" y="-861" width="1720" height="1417" extended-state="0" />
+    <frame x="0" y="23" width="1440" height="877" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Messages" order="10" />
       <window_info anchor="bottom" id="Event Log" order="12" side_tool="true" />
       <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="11" weight="0.3871212" />
+      <window_info anchor="bottom" id="Version Control" order="11" weight="0.68133336" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.5568182" />
       <window_info anchor="bottom" id="Terminal" order="9" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.17151164" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2048611" />
       <window_info anchor="right" id="Database" order="3" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32395834" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32307693" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.25151515" />
@@ -486,7 +494,8 @@
     <MESSAGE value="Added dkgEnc contract, no code adjustments yet. WIP" />
     <MESSAGE value="Almost stable version with Encryption implemented. WIP" />
     <MESSAGE value="Working up to phaseChange, happy flow" />
-    <option name="LAST_COMMIT_MESSAGE" value="Working up to phaseChange, happy flow" />
+    <MESSAGE value="Happy flow passes!" />
+    <option name="LAST_COMMIT_MESSAGE" value="Happy flow passes!" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -498,7 +507,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/app.js</url>
-          <line>201</line>
+          <line>199</line>
           <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="18" />
         </line-breakpoint>
@@ -508,14 +517,8 @@
           <properties />
           <option name="timeStamp" value="32" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/bglsmain.go</url>
-          <line>243</line>
-          <properties />
-          <option name="timeStamp" value="35" />
-        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="36" />
+      <option name="time" value="37" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="GoApplicationRunConfiguration">
@@ -786,13 +789,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/run.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="18" column="15" selection-start-line="18" selection-start-column="15" selection-end-line="18" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///usr/local/Cellar/go/1.10.3/libexec/src/math/big/int.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="311">
@@ -804,13 +800,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="266">
           <caret line="158" column="5" selection-start-line="158" selection-start-column="5" selection-end-line="158" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/contracts/dkgEnc.sol">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="261">
-          <caret line="96" column="28" selection-start-line="96" selection-start-column="28" selection-end-line="96" selection-end-column="28" />
         </state>
       </provider>
     </entry>
@@ -835,45 +824,59 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../bgls/dkg/dkg.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="13" column="5" selection-start-line="13" selection-start-column="5" selection-end-line="13" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="326">
-          <caret line="96" column="38" selection-start-line="96" selection-start-column="38" selection-end-line="96" selection-end-column="38" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/commit_data.json">
       <provider selected="true" editor-type-id="text-editor">
         <state>
-          <caret column="1731" selection-start-column="1731" selection-end-column="1731" />
+          <caret column="7071" selection-start-column="7071" selection-end-column="7071" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../bgls/dkg/dkg_test.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="619">
-          <caret line="134" column="63" selection-start-line="134" selection-start-column="19" selection-end-line="134" selection-end-column="63" />
+        <state relative-caret-position="261">
+          <caret line="81" column="15" selection-start-line="81" selection-start-column="15" selection-end-line="81" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/run.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="176">
+          <caret line="18" column="15" selection-start-line="18" selection-start-column="15" selection-end-line="18" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../bgls/dkg/dkg.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="244">
+          <caret line="66" column="5" selection-start-line="66" selection-start-column="5" selection-end-line="66" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/contracts/dkgEnc.sol">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="322" column="80" lean-forward="true" selection-start-line="322" selection-start-column="80" selection-end-line="322" selection-end-column="80" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/bglsmain.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="263">
-          <caret line="291" column="36" lean-forward="true" selection-start-line="291" selection-start-column="36" selection-end-line="291" selection-end-column="36" />
+        <state relative-caret-position="631">
+          <caret line="611" selection-start-line="611" selection-end-line="611" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/app.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="420">
-          <caret line="76" column="34" selection-start-line="76" selection-start-column="34" selection-end-line="76" selection-end-column="34" />
+        <state relative-caret-position="699">
+          <caret line="543" lean-forward="true" selection-start-line="543" selection-end-line="543" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/bglswrapper.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-168">
+          <caret line="71" selection-start-line="71" selection-end-line="71" />
         </state>
       </provider>
     </entry>
