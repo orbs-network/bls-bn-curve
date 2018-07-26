@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
+### Entry point for the BGLS demo ###
+# If a Ganache instance is already running on GANACHE_PORT, the app will use it and not try to start a new instance, nor will it kill it when it's done.
+# So you may run this script multiple times on an existing Ganache instance.
+# Note though, that after 3 consecutive runs, your accounts might run out of ether (in the complaint flow where the accused client does not get its deposit back) so you will need to restart Ganache.
+
+
 # Import common variables.
 . scripts/common.sh
-
-# Executes cleanup function at script exit.
-
 
 GANACHE_PORT=7545
 
@@ -14,6 +17,9 @@ DEPOSIT_WEI=25000000000000000000
 KEEP_GANACHE_ALIVE=false
 DATA_FILE=$(pwd)/commit_data.json
 MNEMONIC="decorate provide ritual swarm will inmate sausage lab banana daring trash liar"
+
+### To run the happy flow, put 0 as the value of the following 3 indexes. A nonzero value in all 3 indexes will trigger the complaint flow.
+
 COMPLAINER_INDEX=1 # 1-based, the client that complains about client ACCUSED_INDEX
 MALICIOUS_INDEX=2 # 1-based, the client that actually tainted its data
 ACCUSED_INDEX=2 # 1-based, the client that is accused by client COMPLAINER_INDEX of tainting its data

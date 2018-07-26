@@ -273,22 +273,11 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
     throw new Error(`Missing client ID for client #${i} ${client.address}. Client ID is the result of join(). Did join() finished correctly?`);
   }
 
-  // const g1Flat = commitG1.split(",");
-  // const g2Flat = commitG2.split(",");
-  const g1Flat = commitG1;
-  const g2Flat = commitG2;
-
-  // const commitG1BigInts = commitG1.map(e => e.map(numstr => {
-  //   return web3.toHex(numstr);
-  // }));
-  // const commitG2BigInts = commitG2.map(e => e.map(numstr => web3.toHex(numstr)));
   const prv = commitPrv.map(numstr => web3.toHex(numstr));
   //
   // logger.info(`===> Commit(Index: ${client.id}) <===`);
-  // const g1Flat = _.flatMap(commitG1BigInts);
-  // const g2Flat = _.flatMap(commitG2BigInts);
-  logger.debug(`G1: ${JSON.stringify(g1Flat)}`);
-  logger.debug(`G2: ${JSON.stringify(g2Flat)}`);
+  logger.debug(`G1: ${JSON.stringify(commitG1)}`);
+  logger.debug(`G2: ${JSON.stringify(commitG2)}`);
   logger.debug(`Prv: ${JSON.stringify(prv)}`);
 
   await new Promise((resolve, reject) => {
@@ -313,7 +302,7 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
       }
     });
 
-    dkgContract.commit(client.id, g1Flat, g2Flat, prv, {
+    dkgContract.commit(client.id, commitG1, commitG2, prv, {
       from: client.address,
       gas: 3000000
     }, (err, result) => {
@@ -336,7 +325,7 @@ async function commit(client, i, coeffs, commitG1, commitG2, commitPrv) {
 
 function verifyPrivateCommit(complainerIndex, accusedIndex) {
 
-  logger.info(`Now client ID #${complainerIndex} (complainer) is verifying the private commitment of client ID #${accusedIndex} (accused)`);
+  logger.info(`verifyPrivateCommit(): Now client ID #${complainerIndex} (complainer) is verifying the private commitment of client ID #${accusedIndex} (accused)`);
   logger.info(`The private commitment of client ID #${accusedIndex} was intentionally tainted.`);
 
 
@@ -381,7 +370,7 @@ async function sendComplaint(complainerIndex, accusedIndex) {
   const complainerAddress = CLIENTS[complainerIndex - 1].address;
   const accusedID = CLIENTS[accusedIndex - 1].id;
   const curPhase = await dkgContract.curPhase.call();
-  logger.info(`Now client ID #${complainerID} (addr: ${complainerAddress}) is sending a complaint on client ID #${accusedID}. Phase: ${curPhase} SK: ${complainerSK}`);
+  logger.info(`sendComplaint(): Now client ID #${complainerID} (addr: ${complainerAddress}) is sending a complaint on client ID #${accusedID}. Phase: ${curPhase} SK: ${complainerSK}`);
 
   const res = await dkgContract.complaintPrivateCommit(complainerID, accusedID, complainerSK, {
     from: complainerAddress,
