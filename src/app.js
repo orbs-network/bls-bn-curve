@@ -76,11 +76,10 @@ async function main() {
       logger.info(`Client ${COMPLAINER_INDEX} is complaining about client ${ACCUSED_INDEX}, and the actual culprit is client ${MALICIOUS_INDEX}`);
       dataPerParticipant = getCommitDataWithErrors(COMPLAINER_INDEX, MALICIOUS_INDEX);
       fs.writeFileSync(OUTPUT_PATH, JSON.stringify(dataPerParticipant));
-      logger.info(`Data (partially tainted): ${JSON.stringify(dataPerParticipant)}`);
+      // logger.info(`Data (partially tainted): ${JSON.stringify(dataPerParticipant)}`);
       await commitAllClients(dataPerParticipant);
       verifyPrivateCommit(COMPLAINER_INDEX, ACCUSED_INDEX);
       await sendComplaint(COMPLAINER_INDEX, ACCUSED_INDEX);
-      signAndVerify();
     } else {
       logger.info('No one is complaining so running the contract to completion');
       dataPerParticipant = getCommitData();
@@ -355,7 +354,7 @@ function getCommitDataWithErrors(complainerIndex, maliciousIndex) {
   const data = getCommitData();
 
   // Actual data is 0-based so -1 the input values which are 1-based
-  data[maliciousIndex-1].PrvCommit[complainerIndex-1] = "0x00000000000000001234567812345678123456781234567812345678FFFFFFFF"; // Taint the data
+  data[maliciousIndex - 1].PrvCommitEnc[complainerIndex - 1] = "0x00000000000000001234567812345678123456781234567812345678FFFFFFFF"; // Taint the data
   logger.info(`Tainted private commitment of maliciousIndex=${maliciousIndex} to complainerIndex=${complainerIndex}.`);
 
   return data;
@@ -370,12 +369,35 @@ async function sendComplaint(complainerIndex, accusedIndex) {
   const complainerAddress = CLIENTS[complainerIndex - 1].address;
   const accusedID = CLIENTS[accusedIndex - 1].id;
   const curPhase = await dkgContract.curPhase.call();
-  logger.info(`sendComplaint(): Now client ID #${complainerID} (addr: ${complainerAddress}) is sending a complaint on client ID #${accusedID}. Phase: ${curPhase} SK: ${complainerSK}`);
+  const accusedEncPk = await dkgContract.getParticipantPkEnc.call(accusedID);
+  const encPrvCommit = await dkgContract.getParticipantPrvCommit.call(accusedID, complainerID);
+  const pubCommitG1_0 = await dkgContract.getParticipantPubCommitG1.call(accusedID, 0);
+  const pubCommitG1_1 = await dkgContract.getParticipantPubCommitG1.call(accusedID, 1);
+  const pubCommitG1_t = await dkgContract.getParticipantPubCommitG1.call(accusedID, THRESHOLD);
 
-  const res = await dkgContract.complaintPrivateCommit(complainerID, accusedID, complainerSK, {
-    from: complainerAddress,
-    gasLimit: 3000000
-  });
+  const g0_res = await dkgContract.ecmul.call(pubCommitG1_0, 2);
+  const g1_res = await dkgContract.ecmul.call(pubCommitG1_1, 2);
+  const gt_res = await dkgContract.ecmul.call(pubCommitG1_t, 2);
+
+
+
+  logger.info(`sendComplaint(): Now client ID #${complainerID} THRESHOLD=${THRESHOLD} (addr: ${complainerAddress}) is sending a complaint on client ID #${accusedID}. Phase: ${curPhase} SK: ${complainerSK}`);
+  logger.debug(`sendComplaint(): pubCommitG1_0=${pubCommitG1_0[0].toNumber()},${pubCommitG1_0[1].toNumber()} pubCommitG1_t=${pubCommitG1_t[0].toNumber()},${pubCommitG1_t[1].toNumber()}`);
+  logger.debug(`sendComplaint(): decrypt(accusedEncPk=${accusedEncPk},complainerSk=${complainerSK},encPrvCommit=${encPrvCommit}`);
+  logger.debug(`sendComplaint(): g0_res=${g0_res} g1_res=${g1_res} gt_res=${gt_res}`);
+
+  // const decryptRes = await dkgContract.decrypt.call(accusedEncPk, complainerSK, encPrvCommit);
+  // logger.debug(`decrypt() res=${decryptRes}`);
+
+  let res = null;
+  try {
+    res = await dkgContract.complaintPrivateCommit(complainerID, accusedID, complainerSK, {
+      from: complainerAddress,
+      gas: 3000000
+    });
+  } finally {
+    logger.info(`sendComplaint(): res: ${JSON.stringify(res)}`);
+  }
 
   logger.info(`Complaint sent. If the complaint was justified, the deposit of the accused client was split between the other clients, who also had their deposits returned.`);
   logger.info(`If the complaint was not justified, the deposit of the complaining client was split between the other clients, who also had their deposits returned.`);
