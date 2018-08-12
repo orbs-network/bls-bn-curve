@@ -9,6 +9,7 @@ In case the complaint is unjustified, the complainer's deposit is slashed and di
 
 As this is a demo, some code parts are very rudimentary. There is nearly no error checking, and in cases where the app cannot continue, the Go code just throws a panic().
 
+
 ## Installation
 
 * Go to the directory under which you want to clone this repo
